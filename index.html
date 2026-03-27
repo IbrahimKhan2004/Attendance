@@ -662,6 +662,7 @@
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <h2>📝 Attendance Mark Karo</h2>
+    <p style="font-size:0.75rem;color:var(--muted);margin-bottom:1rem;">Proxy class ya schedule change hone par subject change kar sakte hain.</p>
     <label>Date</label>
     <input type="date" id="modalDate">
     <div id="modalPeriods"></div>
@@ -842,8 +843,13 @@ function updateClock() {
   }
 
   if (mins < timeToMins(PERIODS[0].start)) {
-    const diff = timeToMins(PERIODS[0].start) - mins;
-    document.getElementById('currentPeriod').textContent = `⏰ College starts in ${diff} min`;
+    const targetMins = timeToMins(PERIODS[0].start);
+    const diffSecs = (targetMins * 60) - (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds());
+    const hh = Math.floor(diffSecs / 3600);
+    const mm = Math.floor((diffSecs % 3600) / 60);
+    const ss = diffSecs % 60;
+    const timeStr = hh > 0 ? `${hh}h ${mm}m ${ss}s` : `${mm}m ${ss}s`;
+    document.getElementById('currentPeriod').textContent = `⏰ College starts in ${timeStr}`;
     document.getElementById('nextPeriod').textContent = `First: ${TIMETABLE[dayIdx][0].sub} at ${formatTime12(PERIODS[0].start)}`;
     document.getElementById('periodBar').style.width = '0%';
     return;
@@ -990,11 +996,6 @@ function renderAttendance() {
   const pct = total === 0 ? 0 : Math.round((present / total) * 100);
 
   // Ring
-  const now = new Date();
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-  const isHoliday = HOLIDAYS.some(h => h.date === todayStr);
-  document.getElementById('addAttBtn').style.display = isHoliday ? 'none' : 'block';
-
   const circumference = 377;
   const offset = circumference - (pct / 100) * circumference;
   const ring = document.getElementById('ringFg');
@@ -1030,13 +1031,19 @@ function renderAttendance() {
   document.getElementById('subjectAttRows').innerHTML = subHtml;
 
   // Log
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const isHolidayToday = HOLIDAYS.some(h => h.date === todayStr);
+
   const sortedDates = Object.keys(data).sort().reverse();
   const logHtml = sortedDates.map(dateKey => {
     const day = data[dateKey];
     const d = new Date(dateKey);
     const dayName = DAY_NAMES[d.getDay()];
     const pBtns = Object.keys(day).map(pKey => {
-      const [sub, slot] = pKey.split('_');
+      const parts = pKey.split('_');
+      const sub = parts[0];
+      const slot = parts[1];
       const status = day[pKey];
       return `<button class="att-p-btn ${status === 'P' ? 'present' : 'absent'}"
         onclick="togglePeriod('${dateKey}','${pKey}')">${sub}<br><small>${slot}</small></button>`;
@@ -1047,7 +1054,7 @@ function renderAttendance() {
     </div>`;
   }).join('');
   let emptyMsg = '<div style="color:var(--muted);font-size:0.85rem;padding:1rem 0;">Abhi koi attendance nahi hai. Neeche button se lagao!</div>';
-  if (isHoliday) {
+  if (isHolidayToday && !logHtml) {
     const hInfo = HOLIDAYS.find(h => h.date === todayStr);
     emptyMsg = `<div style="color:var(--yellow);font-size:0.9rem;padding:1.5rem;text-align:center;background:rgba(251,191,36,0.05);border:1px dashed var(--border);border-radius:12px;">🎊 Aaj <b>${hInfo.name}</b> ki chutti hai!<br><small style="color:var(--muted)">Holiday pe attendance nahi lagti.</small></div>`;
   }
@@ -1116,12 +1123,30 @@ function fillModalPeriods(dateStr, overrideDay = null) {
   html += PERIODS.map((p, i) => {
     const sub = tt[i].sub;
     if (sub === 'LUNCH' || sub === 'LIBRARY') return '';
-    const key = `${sub}_${p.slot}`;
-    const val = existingData[key] || 'P';
-    return `<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
-      <span style="flex:1;font-size:0.85rem">${sub} (${formatTime12(p.start)})</span>
+    const key = `${p.slot}`;
+
+    // Find if this slot already has data in existingData
+    let currentSub = sub;
+    let val = 'P';
+    for (const k in existingData) {
+      if (k.endsWith('_' + p.slot)) {
+        currentSub = k.split('_')[0];
+        val = existingData[k];
+        break;
+      }
+    }
+
+    const subOptions = SUBJECTS.map(s => `<option value="${s}" ${s === currentSub ? 'selected' : ''}>${s}</option>`).join('');
+
+    return `<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.8rem;background:rgba(255,255,255,0.03);padding:0.5rem;border-radius:8px;border:1px solid var(--border)">
+      <div style="flex:1">
+        <div style="font-size:0.65rem;color:var(--muted);margin-bottom:2px;">Slot ${p.slot} (${formatTime12(p.start)})</div>
+        <select id="msub_${key}" style="width:100%;margin-bottom:0;padding:4px 8px;font-size:0.85rem;background:var(--surface)">
+          ${subOptions}
+        </select>
+      </div>
       <button type="button" class="att-p-btn ${val === 'P' ? 'present' : 'absent'}" id="mbtn_${key}"
-        onclick="toggleModalBtn('${key}')">${val === 'P' ? '✅ Present' : '❌ Absent'}</button>
+        onclick="toggleModalBtn('${key}')" style="min-width:100px">${val === 'P' ? '✅ Present' : '❌ Absent'}</button>
     </div>`;
   }).filter(x => x !== '').join('');
   document.getElementById('modalPeriods').innerHTML = html || '<p style="color:var(--muted)">No periods found</p>';
@@ -1169,9 +1194,21 @@ function saveAttendance() {
   PERIODS.forEach((p, i) => {
     const sub = tt[i].sub;
     if (sub === 'LUNCH' || sub === 'LIBRARY') return;
-    const key = `${sub}_${p.slot}`;
+    const key = `${p.slot}`;
+    const subSelect = document.getElementById('msub_' + key);
     const btn = document.getElementById('mbtn_' + key);
-    if (btn) data[dateStr][key] = btn.classList.contains('present') ? 'P' : 'A';
+    if (subSelect && btn) {
+      // Cleanup any existing keys for this slot to avoid duplicates (proxy changes)
+      for (const existingKey in data[dateStr]) {
+        if (existingKey.endsWith('_' + p.slot)) {
+          delete data[dateStr][existingKey];
+        }
+      }
+
+      const selectedSub = subSelect.value;
+      const actualKey = `${selectedSub}_${p.slot}`;
+      data[dateStr][actualKey] = btn.classList.contains('present') ? 'P' : 'A';
+    }
   });
 
   saveAttData(data);
