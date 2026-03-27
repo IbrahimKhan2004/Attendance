@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -548,7 +548,7 @@
 
     <div class="att-log-section">
       <h3>Daily Log</h3>
-      <button class="add-att-btn" id="addAttBtn" onclick="openAddModal()" style="margin-bottom:1rem">+ Aaj ki Attendance Lagao</button>
+      <button class="add-att-btn" id="addAttBtn" onclick="openAddModal()" style="margin-bottom:1rem">+ Mark Today's Attendance</button>
       <div id="attLog" class="att-log-container"></div>
     </div>
   </div>
@@ -674,8 +674,8 @@
 <!-- Add Attendance Modal -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
-    <h2>📝 Attendance Mark Karo</h2>
-    <p style="font-size:0.75rem;color:var(--muted);margin-bottom:1rem;">Proxy class ya schedule change hone par subject change kar sakte hain.</p>
+    <h2>📝 Mark Attendance</h2>
+    <p style="font-size:0.75rem;color:var(--muted);margin-bottom:1rem;">You can change the subject if there is a proxy class or schedule change.</p>
     <label>Date</label>
     <input type="date" id="modalDate">
     <div id="modalPeriods"></div>
@@ -749,7 +749,7 @@ const TIMETABLE = {
 };
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const DAY_NAMES_HI = ['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'];
+// const DAY_NAMES_HI = ['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'];
 
 const SUBJECTS = ['OS', 'PCS', 'PP', 'DECO', 'MM', 'LAB'];
 
@@ -891,9 +891,9 @@ function updateClock() {
     if (currentIdx + 1 < PERIODS.length) {
       const next = TIMETABLE[dayIdx][currentIdx + 1];
       document.getElementById('nextPeriod').textContent =
-        `⏳ ${remaining} min baki | Next: ${next.sub} at ${formatTime12(PERIODS[currentIdx + 1].start)}`;
+        `⏳ ${remaining} min left | Next: ${next.sub} at ${formatTime12(PERIODS[currentIdx + 1].start)}`;
     } else {
-      document.getElementById('nextPeriod').textContent = `⏳ ${remaining} min baki | Last period!`;
+      document.getElementById('nextPeriod').textContent = `⏳ ${remaining} min left | Last period!`;
     }
   }
 }
@@ -917,7 +917,7 @@ function renderTimetable() {
 
     if (dayOff) {
       const msg = dayIdx === 0
-        ? '<span class="off-emoji">😴</span><span class="off-text">Sunday — Ghar baitho!</span>'
+        ? '<span class="off-emoji">😴</span><span class="off-text">Sunday — Stay home and relax!</span>'
         : '<span class="off-emoji">🎉</span><span class="off-text">Monday — Official OFF!</span>';
       html.push(`<div class="off-day">${msg}</div>`);
     } else {
@@ -1066,10 +1066,10 @@ function renderAttendance() {
       <div class="att-periods">${pBtns}</div>
     </div>`;
   }).join('');
-  let emptyMsg = '<div style="color:var(--muted);font-size:0.85rem;padding:1rem 0;">Abhi koi attendance nahi hai. Upar button se lagao!</div>';
+  let emptyMsg = '<div style="color:var(--muted);font-size:0.85rem;padding:1rem 0;">No attendance recorded yet. Use the button above to mark it!</div>';
   if (isHolidayToday && !logHtml) {
     const hInfo = HOLIDAYS.find(h => h.date === todayStr);
-    emptyMsg = `<div style="color:var(--yellow);font-size:0.9rem;padding:1.5rem;text-align:center;background:rgba(251,191,36,0.05);border:1px dashed var(--border);border-radius:12px;margin: 1rem 0;">🎊 Aaj <b>${hInfo.name}</b> ki chutti hai!<br><small style="color:var(--muted)">Holiday pe attendance nahi lagti.</small></div>`;
+    emptyMsg = `<div style="color:var(--yellow);font-size:0.9rem;padding:1.5rem;text-align:center;background:rgba(251,191,36,0.05);border:1px dashed var(--border);border-radius:12px;margin: 1rem 0;">🎊 Today is a holiday for <b>${hInfo.name}</b>!<br><small style="color:var(--muted)">Attendance cannot be marked on holidays.</small></div>`;
   }
   document.getElementById('attLog').innerHTML = logHtml || emptyMsg;
 }
@@ -1098,7 +1098,7 @@ function fillModalPeriods(dateStr, overrideDay = null) {
   const isHoliday = HOLIDAYS.find(h => h.date === dateStr);
   if (isHoliday) {
     document.getElementById('modalPeriods').innerHTML =
-      `<p style="color:var(--yellow);font-size:0.85rem">Aaj ${isHoliday.name} hai! Holiday pe attendance nahi lagti 🎉</p>`;
+      `<p style="color:var(--yellow);font-size:0.85rem">Today is ${isHoliday.name}! Attendance cannot be marked on holidays 🎉</p>`;
     return;
   }
 
@@ -1107,14 +1107,14 @@ function fillModalPeriods(dateStr, overrideDay = null) {
   if (isOffDay) {
     offDayHtml = `
       <div style="background:rgba(255,234,0,0.05);border:1px dashed var(--yellow);padding:0.8rem;border-radius:8px;margin-bottom:1rem;">
-        <p style="color:var(--yellow);font-size:0.8rem;margin-bottom:8px;">Aaj OFF day hai, par agar extra class thi toh timetable choose karo:</p>
+        <p style="color:var(--yellow);font-size:0.8rem;margin-bottom:8px;">Today is an OFF day, but if there was an extra class, choose a timetable:</p>
         <select id="ttOverride" onchange="fillModalPeriods('${dateStr}', this.value)" style="margin-bottom:0;font-size:0.85rem;padding:0.4rem;">
-          <option value="" ${overrideDay === null ? 'selected' : ''}>-- Timetable Select Karo --</option>
-          <option value="2" ${overrideDay == '2' ? 'selected' : ''}>Tuesday (Mangalwar)</option>
-          <option value="3" ${overrideDay == '3' ? 'selected' : ''}>Wednesday (Budhwar)</option>
-          <option value="4" ${overrideDay == '4' ? 'selected' : ''}>Thursday (Guruwar)</option>
-          <option value="5" ${overrideDay == '5' ? 'selected' : ''}>Friday (Shukrawar)</option>
-          <option value="6" ${overrideDay == '6' ? 'selected' : ''}>Saturday (Shaniwar)</option>
+          <option value="" ${overrideDay === null ? 'selected' : ''}>-- Select Timetable --</option>
+          <option value="2" ${overrideDay == '2' ? 'selected' : ''}>Tuesday</option>
+          <option value="3" ${overrideDay == '3' ? 'selected' : ''}>Wednesday</option>
+          <option value="4" ${overrideDay == '4' ? 'selected' : ''}>Thursday</option>
+          <option value="5" ${overrideDay == '5' ? 'selected' : ''}>Friday</option>
+          <option value="6" ${overrideDay == '6' ? 'selected' : ''}>Saturday</option>
         </select>
       </div>
     `;
@@ -1127,7 +1127,7 @@ function fillModalPeriods(dateStr, overrideDay = null) {
 
   if (!tt) {
     document.getElementById('modalPeriods').innerHTML = offDayHtml +
-      '<p style="color:var(--yellow);font-size:0.85rem">Is din college nahi hota! 🎉</p>';
+      '<p style="color:var(--yellow);font-size:0.85rem">There are no classes on this day! 🎉</p>';
     return;
   }
 
