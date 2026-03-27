@@ -349,6 +349,19 @@
 
   .att-log-section { margin-top: 1.5rem; }
   .att-log-section h3 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 0.8rem; }
+  .att-log-container {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0 1rem;
+    background: var(--surface);
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .att-log-container::-webkit-scrollbar { width: 6px; }
+  .att-log-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
   .att-date-row {
     display: flex;
     align-items: center;
@@ -535,8 +548,8 @@
 
     <div class="att-log-section">
       <h3>Daily Log</h3>
-      <div id="attLog"></div>
-      <button class="add-att-btn" id="addAttBtn" onclick="openAddModal()">+ Aaj ki Attendance Lagao</button>
+      <button class="add-att-btn" id="addAttBtn" onclick="openAddModal()" style="margin-bottom:1rem">+ Aaj ki Attendance Lagao</button>
+      <div id="attLog" class="att-log-container"></div>
     </div>
   </div>
 </div>
@@ -1053,10 +1066,10 @@ function renderAttendance() {
       <div class="att-periods">${pBtns}</div>
     </div>`;
   }).join('');
-  let emptyMsg = '<div style="color:var(--muted);font-size:0.85rem;padding:1rem 0;">Abhi koi attendance nahi hai. Neeche button se lagao!</div>';
+  let emptyMsg = '<div style="color:var(--muted);font-size:0.85rem;padding:1rem 0;">Abhi koi attendance nahi hai. Upar button se lagao!</div>';
   if (isHolidayToday && !logHtml) {
     const hInfo = HOLIDAYS.find(h => h.date === todayStr);
-    emptyMsg = `<div style="color:var(--yellow);font-size:0.9rem;padding:1.5rem;text-align:center;background:rgba(251,191,36,0.05);border:1px dashed var(--border);border-radius:12px;">🎊 Aaj <b>${hInfo.name}</b> ki chutti hai!<br><small style="color:var(--muted)">Holiday pe attendance nahi lagti.</small></div>`;
+    emptyMsg = `<div style="color:var(--yellow);font-size:0.9rem;padding:1.5rem;text-align:center;background:rgba(251,191,36,0.05);border:1px dashed var(--border);border-radius:12px;margin: 1rem 0;">🎊 Aaj <b>${hInfo.name}</b> ki chutti hai!<br><small style="color:var(--muted)">Holiday pe attendance nahi lagti.</small></div>`;
   }
   document.getElementById('attLog').innerHTML = logHtml || emptyMsg;
 }
