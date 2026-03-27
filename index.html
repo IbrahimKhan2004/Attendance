@@ -4,23 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SMS Varanasi — BCA-II Section C</title>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;800&family=Noto+Sans+Devanagari:wght@400;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<!-- Android system fonts — no external load needed -->
 <style>
   :root {
-    --bg: #0d0f1a;
-    --surface: #131629;
-    --card: #1a1e35;
-    --border: #252a45;
-    --accent: #f97316;
-    --accent2: #6366f1;
-    --accent3: #22d3ee;
-    --green: #22c55e;
-    --red: #ef4444;
-    --yellow: #fbbf24;
-    --text: #e8eaf6;
-    --muted: #8892b0;
-    --font-display: 'Baloo 2', cursive;
-    --font-mono: 'Space Mono', monospace;
+    --bg: #000000;
+    --surface: #0a0a0a;
+    --card: #111111;
+    --border: #1e1e1e;
+    --accent: #ff7043;
+    --accent2: #7c4dff;
+    --accent3: #00e5ff;
+    --green: #00e676;
+    --red: #ff1744;
+    --yellow: #ffea00;
+    --text: #e8e8e8;
+    --muted: #666666;
+    --font-display: 'Roboto', 'Google Sans', 'Noto Sans', sans-serif;
+    --font-mono: 'Roboto Mono', 'Courier New', monospace;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -33,24 +33,7 @@
     overflow-x: hidden;
   }
 
-  body::before {
-    content: '';
-    position: fixed;
-    top: -200px; left: -200px;
-    width: 600px; height: 600px;
-    background: radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%);
-    pointer-events: none;
-    z-index: 0;
-  }
-  body::after {
-    content: '';
-    position: fixed;
-    bottom: -200px; right: -200px;
-    width: 600px; height: 600px;
-    background: radial-gradient(circle, rgba(249,115,22,0.10) 0%, transparent 70%);
-    pointer-events: none;
-    z-index: 0;
-  }
+  /* AMOLED: no background glows */
 
   .header {
     position: relative;
