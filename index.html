@@ -932,17 +932,17 @@ function renderHolidays() {
     const isPast = h.date < todayStr;
     const isToday = h.date === todayStr;
     const daysUntil = Math.ceil((new Date(h.date) - new Date(todayStr)) / 86400000);
-    const isSoon = daysUntil > 0 && daysUntil <= 30;
+    const isUpcoming = daysUntil > 0;
 
     let tag = '';
     if (isToday) tag = '<span class="holiday-tag tag-today">🎉 TODAY!</span>';
-    else if (isSoon) tag = `<span class="holiday-tag tag-soon">${daysUntil}d</span>`;
+    else if (isUpcoming) tag = `<span class="holiday-tag tag-soon">${daysUntil}d</span>`;
     else if (isPast) tag = '<span class="holiday-tag tag-past">Done</span>';
 
     const dateParts = h.date.split('-');
     const displayDate = `${dateParts[2]}/${dateParts[1]}`;
 
-    return `<div class="holiday-item${isPast ? ' past' : ''}${isToday ? ' today-holiday' : ''}${isSoon && !isPast ? ' upcoming' : ''}">
+    return `<div class="holiday-item${isPast ? ' past' : ''}${isToday ? ' today-holiday' : ''}${isUpcoming ? ' upcoming' : ''}">
       <div class="holiday-date">${displayDate}</div>
       <div class="holiday-name">${h.name}</div>
       <div class="holiday-day">${h.day}</div>
@@ -1199,6 +1199,7 @@ function showPage(name, btn) {
   document.getElementById('page-' + name).classList.add('fadeIn');
   btn.classList.add('active');
   if (name === 'attendance') renderAttendance();
+  if (name === 'holidays') renderHolidays();
 }
 
 // ========== INIT ==========
@@ -1207,7 +1208,10 @@ renderHolidays();
 clearTodayAttendanceIfHoliday();
 updateClock();
 setInterval(updateClock, 1000);
-setInterval(renderTimetable, 60000); // refresh timetable every minute
+setInterval(() => {
+  renderTimetable();
+  renderHolidays();
+}, 60000); // refresh every minute
 </script>
 </body>
 </html>
