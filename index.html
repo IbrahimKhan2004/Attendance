@@ -596,7 +596,7 @@ const HOLIDAYS = [
   { name: 'Holi 🎨', date: '2026-03-03', day: 'Tuesday' },
   { name: 'Holi 🎨', date: '2026-03-04', day: 'Wednesday' },
   { name: 'Id-Ul-Fitar ✨', date: '2026-03-21', day: 'Saturday' },
-  { name: 'Ram Navami 🪔', date: '2026-03-26', day: 'Thursday' },
+  { name: 'Ram Navami 🪔', date: '2026-03-27', day: 'Friday' },
   { name: 'Mahavir Jayanti', date: '2026-03-31', day: 'Tuesday' },
   { name: 'Good Friday ✝️', date: '2026-04-03', day: 'Friday' },
   { name: 'Dr. Ambedkar Jayanti', date: '2026-04-14', day: 'Tuesday' },
@@ -625,6 +625,12 @@ function timeToMins(t) {
   return h * 60 + m;
 }
 
+function formatTime12(t) {
+  const [h, m] = t.split(':').map(Number);
+  const hh = h % 12 || 12;
+  return `${hh}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
+}
+
 function getCurrentPeriod(dayIdx) {
   if (!TIMETABLE[dayIdx]) return null;
   const now = new Date();
@@ -639,10 +645,12 @@ function getCurrentPeriod(dayIdx) {
 
 function updateClock() {
   const now = new Date();
-  const h = String(now.getHours()).padStart(2, '0');
+  const hour = now.getHours();
+  const h = String(hour % 12 || 12).padStart(2, '0');
   const m = String(now.getMinutes()).padStart(2, '0');
   const s = String(now.getSeconds()).padStart(2, '0');
-  document.getElementById('clockTime').textContent = `${h}:${m}:${s}`;
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  document.getElementById('clockTime').textContent = `${h}:${m}:${s} ${ampm}`;
 
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -684,7 +692,7 @@ function updateClock() {
   if (mins < timeToMins(PERIODS[0].start)) {
     const diff = timeToMins(PERIODS[0].start) - mins;
     document.getElementById('currentPeriod').textContent = `⏰ College starts in ${diff} min`;
-    document.getElementById('nextPeriod').textContent = `First: ${TIMETABLE[dayIdx][0].sub} at ${PERIODS[0].start}`;
+    document.getElementById('nextPeriod').textContent = `First: ${TIMETABLE[dayIdx][0].sub} at ${formatTime12(PERIODS[0].start)}`;
     document.getElementById('periodBar').style.width = '0%';
     return;
   }
@@ -712,7 +720,7 @@ function updateClock() {
     if (currentIdx + 1 < PERIODS.length) {
       const next = TIMETABLE[dayIdx][currentIdx + 1];
       document.getElementById('nextPeriod').textContent =
-        `⏳ ${remaining} min baki | Next: ${next.sub} at ${PERIODS[currentIdx + 1].start}`;
+        `⏳ ${remaining} min baki | Next: ${next.sub} at ${formatTime12(PERIODS[currentIdx + 1].start)}`;
     } else {
       document.getElementById('nextPeriod').textContent = `⏳ ${remaining} min baki | Last period!`;
     }
@@ -751,7 +759,7 @@ function renderTimetable() {
           mins >= timeToMins(PERIODS[i].start) && mins < timeToMins(PERIODS[i].end);
         const isLunch = pd.sub === 'LUNCH';
         html.push(`<div class="period-cell${isCurrent ? ' current-period' : ''}${isLunch ? ' lunch' : ''}">
-          <div class="p-time">${PERIODS[i].start}–${PERIODS[i].end}</div>
+          <div class="p-time">${formatTime12(PERIODS[i].start)}–${formatTime12(PERIODS[i].end)}</div>
           <div class="p-subject">${pd.sub}</div>
           ${pd.teacher ? `<div class="p-teacher">${pd.teacher}</div>` : ''}
         </div>`);
@@ -918,12 +926,22 @@ function fillModalPeriods(dateStr) {
     const key = `${sub}_${p.slot}`;
     const val = existingData[key] || 'P';
     return `<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
-      <span style="flex:1;font-size:0.85rem">${sub} (${p.start})</span>
+      <span style="flex:1;font-size:0.85rem">${sub} (${formatTime12(p.start)})</span>
       <button type="button" class="att-p-btn ${val === 'P' ? 'present' : 'absent'}" id="mbtn_${key}"
         onclick="toggleModalBtn('${key}')">${val === 'P' ? '✅ Present' : '❌ Absent'}</button>
     </div>`;
   }).join('');
   document.getElementById('modalPeriods').innerHTML = html || '<p style="color:var(--muted)">No periods found</p>';
+}
+
+function clearTodayAttendanceIfHoliday() {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const isHoliday = HOLIDAYS.some(h => h.date === todayStr);
+  if (!isHoliday) return;
+  const data = getAttData();
+  if (!data[todayStr]) return;
+  delete data[todayStr];
+  saveAttData(data);
 }
 
 function toggleModalBtn(key) {
@@ -980,6 +998,7 @@ function showPage(name, btn) {
 // ========== INIT ==========
 renderTimetable();
 renderHolidays();
+clearTodayAttendanceIfHoliday();
 updateClock();
 setInterval(updateClock, 1000);
 setInterval(renderTimetable, 60000); // refresh timetable every minute
