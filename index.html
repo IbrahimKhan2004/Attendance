@@ -1069,10 +1069,10 @@ function openAddModal() {
   document.getElementById('modalOverlay').classList.add('open');
 }
 
-function fillModalPeriods(dateStr) {
+function fillModalPeriods(dateStr, overrideDay = null) {
   if (!dateStr) return;
   const d = new Date(dateStr);
-  const dayIdx = d.getDay();
+  const dayIdx = overrideDay !== null ? parseInt(overrideDay) : d.getDay();
   const tt = TIMETABLE[dayIdx];
 
   const isHoliday = HOLIDAYS.find(h => h.date === dateStr);
@@ -1082,14 +1082,38 @@ function fillModalPeriods(dateStr) {
     return;
   }
 
-  if (!tt || dayIdx === 0 || dayIdx === 1) {
-    document.getElementById('modalPeriods').innerHTML =
+  const isOffDay = !TIMETABLE[d.getDay()] || d.getDay() === 0 || d.getDay() === 1;
+  let offDayHtml = '';
+  if (isOffDay) {
+    offDayHtml = `
+      <div style="background:rgba(255,234,0,0.05);border:1px dashed var(--yellow);padding:0.8rem;border-radius:8px;margin-bottom:1rem;">
+        <p style="color:var(--yellow);font-size:0.8rem;margin-bottom:8px;">Aaj OFF day hai, par agar extra class thi toh timetable choose karo:</p>
+        <select id="ttOverride" onchange="fillModalPeriods('${dateStr}', this.value)" style="margin-bottom:0;font-size:0.85rem;padding:0.4rem;">
+          <option value="" ${overrideDay === null ? 'selected' : ''}>-- Timetable Select Karo --</option>
+          <option value="2" ${overrideDay == '2' ? 'selected' : ''}>Tuesday (Mangalwar)</option>
+          <option value="3" ${overrideDay == '3' ? 'selected' : ''}>Wednesday (Budhwar)</option>
+          <option value="4" ${overrideDay == '4' ? 'selected' : ''}>Thursday (Guruwar)</option>
+          <option value="5" ${overrideDay == '5' ? 'selected' : ''}>Friday (Shukrawar)</option>
+          <option value="6" ${overrideDay == '6' ? 'selected' : ''}>Saturday (Shaniwar)</option>
+        </select>
+      </div>
+    `;
+  }
+
+  if (isOffDay && overrideDay === null) {
+    document.getElementById('modalPeriods').innerHTML = offDayHtml;
+    return;
+  }
+
+  if (!tt) {
+    document.getElementById('modalPeriods').innerHTML = offDayHtml +
       '<p style="color:var(--yellow);font-size:0.85rem">Is din college nahi hota! 🎉</p>';
     return;
   }
 
   const existingData = getAttData()[dateStr] || {};
-  const html = PERIODS.map((p, i) => {
+  let html = overrideDay !== null ? offDayHtml : '';
+  html += PERIODS.map((p, i) => {
     const sub = tt[i].sub;
     if (sub === 'LUNCH' || sub === 'LIBRARY') return '';
     const key = `${sub}_${p.slot}`;
@@ -1099,7 +1123,7 @@ function fillModalPeriods(dateStr) {
       <button type="button" class="att-p-btn ${val === 'P' ? 'present' : 'absent'}" id="mbtn_${key}"
         onclick="toggleModalBtn('${key}')">${val === 'P' ? '✅ Present' : '❌ Absent'}</button>
     </div>`;
-  }).join('');
+  }).filter(x => x !== '').join('');
   document.getElementById('modalPeriods').innerHTML = html || '<p style="color:var(--muted)">No periods found</p>';
 }
 
@@ -1134,9 +1158,10 @@ function saveAttendance() {
   }
 
   const d = new Date(dateStr);
-  const dayIdx = d.getDay();
+  const overrideSelect = document.getElementById('ttOverride');
+  const dayIdx = (overrideSelect && overrideSelect.value) ? parseInt(overrideSelect.value) : d.getDay();
   const tt = TIMETABLE[dayIdx];
-  if (!tt || dayIdx === 0 || dayIdx === 1) { closeModal(); return; }
+  if (!tt) { closeModal(); return; }
 
   const data = getAttData();
   if (!data[dateStr]) data[dateStr] = {};
