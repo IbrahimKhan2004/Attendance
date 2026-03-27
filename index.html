@@ -1046,7 +1046,12 @@ function renderAttendance() {
       <div class="att-periods">${pBtns}</div>
     </div>`;
   }).join('');
-  document.getElementById('attLog').innerHTML = logHtml || '<div style="color:var(--muted);font-size:0.85rem;padding:1rem 0;">Abhi koi attendance nahi hai. Neeche button se lagao!</div>';
+  let emptyMsg = '<div style="color:var(--muted);font-size:0.85rem;padding:1rem 0;">Abhi koi attendance nahi hai. Neeche button se lagao!</div>';
+  if (isHoliday) {
+    const hInfo = HOLIDAYS.find(h => h.date === todayStr);
+    emptyMsg = `<div style="color:var(--yellow);font-size:0.9rem;padding:1.5rem;text-align:center;background:rgba(251,191,36,0.05);border:1px dashed var(--border);border-radius:12px;">🎊 Aaj <b>${hInfo.name}</b> ki chutti hai!<br><small style="color:var(--muted)">Holiday pe attendance nahi lagti.</small></div>`;
+  }
+  document.getElementById('attLog').innerHTML = logHtml || emptyMsg;
 }
 
 function togglePeriod(dateKey, pKey) {
