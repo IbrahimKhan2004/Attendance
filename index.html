@@ -536,7 +536,7 @@
     <div class="att-log-section">
       <h3>Daily Log</h3>
       <div id="attLog"></div>
-      <button class="add-att-btn" onclick="openAddModal()">+ Aaj ki Attendance Lagao</button>
+      <button class="add-att-btn" id="addAttBtn" onclick="openAddModal()">+ Aaj ki Attendance Lagao</button>
     </div>
   </div>
 </div>
@@ -674,7 +674,7 @@
 
 <script>
 // ========== DATA ==========
-const PERIODS =[
+const PERIODS = [
   { slot: 'VI',   start: '11:45', end: '12:30', label: 'VI' },
   { slot: 'VII',  start: '12:30', end: '13:15', label: 'VII' },
   { slot: 'VIII', start: '13:15', end: '14:00', label: 'VIII' },
@@ -687,7 +687,7 @@ const PERIODS =[
 // Section C timetable (days: 0=Sun, 1=Mon, ..., 6=Sat)
 const TIMETABLE = {
   1: null, // Monday OFF
-  2:[ // Tuesday
+  2: [ // Tuesday
     { sub: 'LAB', teacher: '' },
     { sub: 'OS', teacher: 'SSS' },
     { sub: 'PCS', teacher: 'CPA' },
@@ -696,7 +696,7 @@ const TIMETABLE = {
     { sub: 'DECO', teacher: 'ADG' },
     { sub: 'MM', teacher: 'MST' },
   ],
-  3:[ // Wednesday
+  3: [ // Wednesday
     { sub: 'LAB', teacher: '' },
     { sub: 'PP', teacher: 'Su.S' },
     { sub: 'PCS', teacher: 'CPA' },
@@ -705,7 +705,7 @@ const TIMETABLE = {
     { sub: 'DECO', teacher: 'ADG' },
     { sub: 'LIBRARY', teacher: '' },
   ],
-  4:[ // Thursday
+  4: [ // Thursday
     { sub: 'OS', teacher: 'SSS' },
     { sub: 'PP', teacher: 'Su.S' },
     { sub: 'DECO', teacher: 'ADG' },
@@ -714,7 +714,7 @@ const TIMETABLE = {
     { sub: 'MM', teacher: 'MST' },
     { sub: 'LIBRARY', teacher: '' },
   ],
-  5:[ // Friday
+  5: [ // Friday
     { sub: 'OS', teacher: 'SSS' },
     { sub: 'PP', teacher: 'Su.S' },
     { sub: 'PCS', teacher: 'CPA' },
@@ -723,7 +723,7 @@ const TIMETABLE = {
     { sub: 'MM', teacher: 'MST' },
     { sub: 'LIBRARY', teacher: '' },
   ],
-  6:[ // Saturday
+  6: [ // Saturday
     { sub: 'OS', teacher: 'SSS' },
     { sub: 'LIBRARY', teacher: '' },
     { sub: 'PCS', teacher: 'CPA' },
@@ -734,12 +734,12 @@ const TIMETABLE = {
   ],
 };
 
-const DAY_NAMES =['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const DAY_NAMES_HI =['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'];
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const DAY_NAMES_HI = ['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'];
 
 const SUBJECTS = ['OS', 'PCS', 'PP', 'DECO', 'MM', 'LAB'];
 
-const HOLIDAYS =[
+const HOLIDAYS = [
   { name: 'Makar Sankranti', date: '2026-01-15', day: 'Thursday' },
   { name: 'Basant Panchami', date: '2026-01-23', day: 'Friday' },
   { name: 'Republic Day 🇮🇳', date: '2026-01-26', day: 'Monday' },
@@ -804,8 +804,8 @@ function updateClock() {
   const ampm = hour >= 12 ? 'PM' : 'AM';
   document.getElementById('clockTime').textContent = `${h}:${m}:${s} ${ampm}`;
 
-  const days =['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const months =['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   document.getElementById('clockDate').textContent =
     `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
 
@@ -885,7 +885,7 @@ function renderTimetable() {
   const today = new Date().getDay();
   const html = [];
 
-  const order =[1,2,3,4,5,6,0]; // Mon first
+  const order = [1,2,3,4,5,6,0]; // Mon first
   for (const dayIdx of order) {
     const isToday = dayIdx === today;
     const dayOff = (dayIdx === 0 || dayIdx === 1);
@@ -990,6 +990,11 @@ function renderAttendance() {
   const pct = total === 0 ? 0 : Math.round((present / total) * 100);
 
   // Ring
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const isHoliday = HOLIDAYS.some(h => h.date === todayStr);
+  document.getElementById('addAttBtn').style.display = isHoliday ? 'none' : 'block';
+
   const circumference = 377;
   const offset = circumference - (pct / 100) * circumference;
   const ring = document.getElementById('ringFg');
@@ -1031,7 +1036,7 @@ function renderAttendance() {
     const d = new Date(dateKey);
     const dayName = DAY_NAMES[d.getDay()];
     const pBtns = Object.keys(day).map(pKey => {
-      const[sub, slot] = pKey.split('_');
+      const [sub, slot] = pKey.split('_');
       const status = day[pKey];
       return `<button class="att-p-btn ${status === 'P' ? 'present' : 'absent'}"
         onclick="togglePeriod('${dateKey}','${pKey}')">${sub}<br><small>${slot}</small></button>`;
@@ -1175,4 +1180,4 @@ setInterval(updateClock, 1000);
 setInterval(renderTimetable, 60000); // refresh timetable every minute
 </script>
 </body>
-</html>
+</html>```
