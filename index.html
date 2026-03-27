@@ -261,6 +261,39 @@
   .tag-soon { background: var(--accent2); color: white; }
   .tag-past { background: var(--border); color: var(--muted); }
 
+  /* ===== SYLLABUS ===== */
+  .syllabus-container { padding: 1.5rem 1rem; }
+  .syl-subject {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+  }
+  .syl-header {
+    padding: 1rem;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border);
+    font-weight: 700;
+    color: var(--accent2);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .syl-header::after {
+    content: '▼';
+    font-size: 0.8rem;
+    transition: transform 0.3s;
+  }
+  .syl-subject.open .syl-header::after { transform: rotate(180deg); }
+  .syl-content { display: none; padding: 1rem; }
+  .syl-subject.open .syl-content { display: block; }
+  .syl-unit { margin-bottom: 1rem; }
+  .syl-unit:last-child { margin-bottom: 0; }
+  .syl-unit-title { font-size: 0.85rem; font-weight: 700; color: var(--accent3); margin-bottom: 0.3rem; }
+  .syl-unit-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.4; }
+
   /* ===== ATTENDANCE ===== */
   .att-container { padding: 1.5rem 1rem; }
   .att-summary {
@@ -461,6 +494,7 @@
   <button class="tab active" onclick="showPage('timetable', this)">📅 Timetable</button>
   <button class="tab" onclick="showPage('holidays', this)">🎉 Holidays</button>
   <button class="tab" onclick="showPage('attendance', this)">✅ Attendance</button>
+  <button class="tab" onclick="showPage('syllabus', this)">📚 Syllabus</button>
 </div>
 
 <!-- TIMETABLE PAGE -->
@@ -507,6 +541,123 @@
   </div>
 </div>
 
+<!-- SYLLABUS PAGE -->
+<div class="page" id="page-syllabus">
+  <div class="syllabus-container">
+    
+    <div class="syl-subject">
+      <div class="syl-header" onclick="toggleSyllabus(this)">Professional Communication</div>
+      <div class="syl-content">
+        <div class="syl-unit">
+          <div class="syl-unit-title">Unit 1: Introduction to Professional Communication</div>
+          <div class="syl-unit-desc">Introduction to Professional Communication - Concept and Significance - Communication Process and Barriers - Communication in a Professional Setting - Verbal and Non-Verbal Communication.</div>
+        </div>
+        <div class="syl-unit">
+          <div class="syl-unit-title">Unit 2: Forms of Business Communication</div>
+          <div class="syl-unit-desc">Writing Skills for Professionals - Email Etiquette, Resume & Cover Letter - Business Letters and Memos, - Report Writing and Note Taking - Technical and Non-technical Writing.</div>
+        </div>
+        <div class="syl-unit">
+          <div class="syl-unit-title">Unit 3: Oral Communication</div>
+          <div class="syl-unit-desc">Oral Communication in Workplace, Effective Presentations, Group Discussions, Meetings, and Interviews, Telephone and Virtual, Communication - Listening and Feedback Skills, Advanced visual support for business presentation, Types of visual aid.</div>
+        </div>
+        <div class="syl-unit">
+          <div class="syl-unit-title">Unit 4: Digital and Intercultural Communication</div>
+          <div class="syl-unit-desc">Digital Tools for Professional Communication, Communication across Cultures, Social Media Use and Ethics, Workplace Etiquette and Professionalism, Communication networks - Intranet - Internet - e mails - SMS - teleconferencing - video conferencing.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="syl-subject">
+      <div class="syl-header" onclick="toggleSyllabus(this)">Marketing Fundamentals</div>
+      <div class="syl-content">
+        <div class="syl-unit">
+          <div class="syl-unit-title">Unit 1: Marketing Fundamentals</div>
+          <div class="syl-unit-desc">Meaning and importance of Marketing; Philosophies/Approaches of Marketing; Core Marketing Concepts; Marketing Mix; Holistic Marketing Dimensions; Marketing Management Tasks; Marketing Environment; Factors affecting Buyer Behaviour.</div>
+        </div>
+        <div class="syl-unit">
+          <div class="syl-unit-title">Unit 2: Segmentation, Targeting and Positioning</div>
+          <div class="syl-unit-desc">Meaning and importance of segmentation, Levels of segmentation, Bases of market segmentation, Effective segmentation criteria, Meaning of Targeting, Basis for identifying target customers, Target Market Strategies, Meaning and importance of positioning, Consumer desirability criteria for point-of-difference, Differentiation strategies.</div>
+        </div>
+        <div class="syl-unit">
+          <div class="syl-unit-title">Unit 3: Managing the Product</div>
+          <div class="syl-unit-desc">Distinguishing aspects of Products & services; Product Levels; Product Line and Mix; Packaging; New Product Development Process; Product Life Cycle; Concept of brand and branding; Meaning of Marketing Channel, Marketing channel functions, Types of channel members, Channel Management Decisions, Variables affecting channel structure and Channel Conflict.</div>
+        </div>
+        <div class="syl-unit">
+          <div class="syl-unit-title">Unit 4: Channels of Distribution</div>
+          <div class="syl-unit-desc">Pricing Objectives; Factors influencing Pricing; Pricing Methods / Strategies; Promotional Mix; Introduction to Advertising; Personal Selling; Sales Promotion; Publicity & Public Relations; Direct Marketing and Interactive/Internet Marketing.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="syl-subject">
+      <div class="syl-header" onclick="toggleSyllabus(this)">Fundamentals of Python Programming</div>
+      <div class="syl-content">
+        <div class="syl-unit">
+          <div class="syl-unit-title">Unit 1: Fundamentals of Python Programming</div>
+          <div class="syl-unit-desc">Introduction to Python: Features, history, and applications. Installation and Python IDEs: IDLE, Jupyter Notebook. Python syntax, indentation, and comment. Variables, constants and basic data types: int, float, bool, str. Operators: Arithmetic, comparison, logical, assignment, membership, and identity. Input/output using input(), print(), Type casting and expressions.</div>
+        </div>
+        <div class="syl-unit">
+          <div class="syl-unit-title">Unit 2: Control Flow and Modular Programming</div>
+          <div class="syl-unit-desc">Conditional statements: if, if-else, elif, nested conditions. Looping constructs: for, while, range(). Loop control statements: break, continue, pass, else with loops Introduction to functions: def, parameters, return values.</div>
+        </div>
+        <div class="syl-unit">
+          <div class="syl-unit-title">Unit 3: Collections and User-defined Functions</div>
+          <div class="syl-unit-desc">Introduction to Strings, Lists, Tuples, Dictionaries and Sets. Implementation of basic operations such as Creation, Indexing, slicing, manipulation. Basic User defined functions on Strings, List, Tuples and Dictionaries such as find(), split(), replace(), append(), remove() etc. Types of functions: user-defined, built-in, and lambda. Variable scope: local, global, Introduction to modular programming and code reusability.</div>
+        </div>
+        <div class="syl-unit">
+          <div class="syl-unit-title">Unit 4: File Handling, Modules, and Data Libraries</div>
+          <div class="syl-unit-desc">File Types, File modes- r, w, a, r+, w+ File I/O: Opening, reading (read(), readline(), readlines()), writing (write(), writelines()), closing files. File pointer operations: seek(), tell(). Exception handling basics (try-except) during file operations.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="syl-subject">
+      <div class="syl-header" onclick="toggleSyllabus(this)">Digital Electronics & Computer Organization</div>
+      <div class="syl-content">
+        <div class="syl-unit">
+          <div class="syl-unit-title">Unit 1: Number System and Logic Gates</div>
+          <div class="syl-unit-desc">Number System: Representation and Conversion, BCD, Gray Code, 1s Complement and 2s Compliment of Binary Number. Logic Gates and truth Tables of OR, AND, NOR, NAND, XOR & XNOR Gates.</div>
+        </div>
+        <div class="syl-unit">
+          <div class="syl-unit-title">Unit 2: Circuit Designing and Combinational Building Blocks</div>
+          <div class="syl-unit-desc">Boolean algebra: De Morgan's laws, Boolean laws. Circuit designing techniques (SOP, POS, K-Map) Combinational circuit: Multiplexors, Decoder, Encoder, Half Adder, Full Adder and Binary Subtractor.</div>
+        </div>
+        <div class="syl-unit">
+          <div class="syl-unit-title">Unit 3: Sequential Building Blocks and Memories</div>
+          <div class="syl-unit-desc">Sequential circuit: Flip-flop (RS, D, JK, Master-Slave & T flip-flops), Counter. Combinational vs. Sequential circuit. Memories: Types Memory hierarchy, architecture of ROM, types of ROM, architecture of RAM, types of RAMs, hard disk, floppy disk and CD-ROM.</div>
+        </div>
+        <div class="syl-unit">
+          <div class="syl-unit-title">Unit 4: Memory Organization</div>
+          <div class="syl-unit-desc">Building large memories using chips, address and memory space address associative memory, hardware organization of associative memory, cache memory organization, associative mapping, direct mapping, Virtual memory organization.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="syl-subject">
+      <div class="syl-header" onclick="toggleSyllabus(this)">Operating Systems Overview</div>
+      <div class="syl-content">
+        <div class="syl-unit">
+          <div class="syl-unit-title">Unit 1: Operating Systems Overview</div>
+          <div class="syl-unit-desc">Definition, Architecture, Types of Operating Systems, Batch Systems, Concepts of Multiprogramming and Time Sharing, Distributed and Real Time Systems. Operating Systems Structures: Operating system services and Systems Calls.</div>
+        </div>
+        <div class="syl-unit">
+          <div class="syl-unit-title">Unit 2: Process Management</div>
+          <div class="syl-unit-desc">Process Definition, Process States and Transitions, Process Control Block, Threads, Concept of multithreads, Benefits of Threads, Process Scheduling: Definition, Scheduling Objectives, CPU scheduling Preemptive and Non-Preemptive Scheduling algorithms (FCFS, SJF and RR), Performance evaluation of the scheduling Algorithms.</div>
+        </div>
+        <div class="syl-unit">
+          <div class="syl-unit-title">Unit 3: Process Synchronization and Deadlock</div>
+          <div class="syl-unit-desc">Introduction, Inter-process Communication, Race Conditions, Critical Section Problem, Mutual Exclusion, Deadlock: Definition and concept, System model, deadlock prevention, avoidance, Banker's algorithm with example, Deadlock Detection, Recovery from deadlocks.</div>
+        </div>
+        <div class="syl-unit">
+          <div class="syl-unit-title">Unit 4: Memory and I/O Management</div>
+          <div class="syl-unit-desc">Logical and Physical address map, Swapping, Memory Allocation, Internal and External fragmentation and Compaction, Paging, Segmentation, Virtual Memory: Demand paging, Page Replacement algorithms, thrashing. I/O Management: Principles of I/O Hardware: Disk structure, Disk scheduling algorithms.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <!-- Add Attendance Modal -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
@@ -523,7 +674,7 @@
 
 <script>
 // ========== DATA ==========
-const PERIODS = [
+const PERIODS =[
   { slot: 'VI',   start: '11:45', end: '12:30', label: 'VI' },
   { slot: 'VII',  start: '12:30', end: '13:15', label: 'VII' },
   { slot: 'VIII', start: '13:15', end: '14:00', label: 'VIII' },
@@ -536,7 +687,7 @@ const PERIODS = [
 // Section C timetable (days: 0=Sun, 1=Mon, ..., 6=Sat)
 const TIMETABLE = {
   1: null, // Monday OFF
-  2: [ // Tuesday
+  2:[ // Tuesday
     { sub: 'LAB', teacher: '' },
     { sub: 'OS', teacher: 'SSS' },
     { sub: 'PCS', teacher: 'CPA' },
@@ -545,7 +696,7 @@ const TIMETABLE = {
     { sub: 'DECO', teacher: 'ADG' },
     { sub: 'MM', teacher: 'MST' },
   ],
-  3: [ // Wednesday
+  3:[ // Wednesday
     { sub: 'LAB', teacher: '' },
     { sub: 'PP', teacher: 'Su.S' },
     { sub: 'PCS', teacher: 'CPA' },
@@ -554,7 +705,7 @@ const TIMETABLE = {
     { sub: 'DECO', teacher: 'ADG' },
     { sub: 'LIBRARY', teacher: '' },
   ],
-  4: [ // Thursday
+  4:[ // Thursday
     { sub: 'OS', teacher: 'SSS' },
     { sub: 'PP', teacher: 'Su.S' },
     { sub: 'DECO', teacher: 'ADG' },
@@ -563,7 +714,7 @@ const TIMETABLE = {
     { sub: 'MM', teacher: 'MST' },
     { sub: 'LIBRARY', teacher: '' },
   ],
-  5: [ // Friday
+  5:[ // Friday
     { sub: 'OS', teacher: 'SSS' },
     { sub: 'PP', teacher: 'Su.S' },
     { sub: 'PCS', teacher: 'CPA' },
@@ -572,7 +723,7 @@ const TIMETABLE = {
     { sub: 'MM', teacher: 'MST' },
     { sub: 'LIBRARY', teacher: '' },
   ],
-  6: [ // Saturday
+  6:[ // Saturday
     { sub: 'OS', teacher: 'SSS' },
     { sub: 'LIBRARY', teacher: '' },
     { sub: 'PCS', teacher: 'CPA' },
@@ -583,12 +734,12 @@ const TIMETABLE = {
   ],
 };
 
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const DAY_NAMES_HI = ['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'];
+const DAY_NAMES =['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const DAY_NAMES_HI =['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'];
 
 const SUBJECTS = ['OS', 'PCS', 'PP', 'DECO', 'MM', 'LAB'];
 
-const HOLIDAYS = [
+const HOLIDAYS =[
   { name: 'Makar Sankranti', date: '2026-01-15', day: 'Thursday' },
   { name: 'Basant Panchami', date: '2026-01-23', day: 'Friday' },
   { name: 'Republic Day 🇮🇳', date: '2026-01-26', day: 'Monday' },
@@ -653,8 +804,8 @@ function updateClock() {
   const ampm = hour >= 12 ? 'PM' : 'AM';
   document.getElementById('clockTime').textContent = `${h}:${m}:${s} ${ampm}`;
 
-  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const days =['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const months =['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   document.getElementById('clockDate').textContent =
     `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
 
@@ -734,7 +885,7 @@ function renderTimetable() {
   const today = new Date().getDay();
   const html = [];
 
-  const order = [1,2,3,4,5,6,0]; // Mon first
+  const order =[1,2,3,4,5,6,0]; // Mon first
   for (const dayIdx of order) {
     const isToday = dayIdx === today;
     const dayOff = (dayIdx === 0 || dayIdx === 1);
@@ -880,7 +1031,7 @@ function renderAttendance() {
     const d = new Date(dateKey);
     const dayName = DAY_NAMES[d.getDay()];
     const pBtns = Object.keys(day).map(pKey => {
-      const [sub, slot] = pKey.split('_');
+      const[sub, slot] = pKey.split('_');
       const status = day[pKey];
       return `<button class="att-p-btn ${status === 'P' ? 'present' : 'absent'}"
         onclick="togglePeriod('${dateKey}','${pKey}')">${sub}<br><small>${slot}</small></button>`;
@@ -913,6 +1064,13 @@ function fillModalPeriods(dateStr) {
   const d = new Date(dateStr);
   const dayIdx = d.getDay();
   const tt = TIMETABLE[dayIdx];
+
+  const isHoliday = HOLIDAYS.find(h => h.date === dateStr);
+  if (isHoliday) {
+    document.getElementById('modalPeriods').innerHTML =
+      `<p style="color:var(--yellow);font-size:0.85rem">Aaj ${isHoliday.name} hai! Holiday pe attendance nahi lagti 🎉</p>`;
+    return;
+  }
 
   if (!tt || dayIdx === 0 || dayIdx === 1) {
     document.getElementById('modalPeriods').innerHTML =
@@ -958,10 +1116,17 @@ function toggleModalBtn(key) {
 function saveAttendance() {
   const dateStr = document.getElementById('modalDate').value;
   if (!dateStr) return;
+
+  const isHoliday = HOLIDAYS.find(h => h.date === dateStr);
+  if (isHoliday) {
+    closeModal();
+    return;
+  }
+
   const d = new Date(dateStr);
   const dayIdx = d.getDay();
   const tt = TIMETABLE[dayIdx];
-  if (!tt) { closeModal(); return; }
+  if (!tt || dayIdx === 0 || dayIdx === 1) { closeModal(); return; }
 
   const data = getAttData();
   if (!data[dateStr]) data[dateStr] = {};
@@ -986,6 +1151,10 @@ function closeModal() {
 document.getElementById('modalDate').addEventListener('change', function() {
   fillModalPeriods(this.value);
 });
+
+function toggleSyllabus(el) {
+  el.parentElement.classList.toggle('open');
+}
 
 // ========== TABS ==========
 function showPage(name, btn) {
