@@ -460,6 +460,7 @@
 <div class="tabs">
   <button class="tab active" onclick="showPage('timetable', this)">📅 Timetable</button>
   <button class="tab" onclick="showPage('holidays', this)">🎉 Holidays</button>
+  <button class="tab" onclick="showPage('syllabus', this)">📚 Syllabus</button>
   <button class="tab" onclick="showPage('attendance', this)">✅ Attendance</button>
 </div>
 
@@ -472,6 +473,13 @@
 <div class="page" id="page-holidays">
   <div class="holidays-container">
     <div class="holiday-list" id="holidayList"></div>
+  </div>
+</div>
+
+<!-- SYLLABUS PAGE -->
+<div class="page" id="page-syllabus">
+  <div style="padding: 1.5rem 1rem;">
+    <div id="syllabusContent"></div>
   </div>
 </div>
 
@@ -537,56 +545,94 @@ const PERIODS = [
 const TIMETABLE = {
   1: null, // Monday OFF
   2: [ // Tuesday
-    { sub: 'LAB', teacher: '' },
-    { sub: 'OS', teacher: 'SSS' },
-    { sub: 'PCS', teacher: 'CPA' },
+    { sub: 'Programming for Problem Solving (PPS)', teacher: '' },
+    { sub: 'Engineering Chemistry', teacher: 'SSS' },
+    { sub: 'Mathematics-II', teacher: 'CPA' },
     { sub: 'LUNCH', teacher: '' },
-    { sub: 'LAB', teacher: '' },
-    { sub: 'DECO', teacher: 'ADG' },
-    { sub: 'MM', teacher: 'MST' },
+    { sub: 'Programming for Problem Solving (PPS)', teacher: '' },
+    { sub: 'Basic Electrical Engineering (BEE)', teacher: 'ADG' },
+    { sub: 'English', teacher: 'MST' },
   ],
   3: [ // Wednesday
-    { sub: 'LAB', teacher: '' },
-    { sub: 'PP', teacher: 'Su.S' },
-    { sub: 'PCS', teacher: 'CPA' },
+    { sub: 'Programming for Problem Solving (PPS)', teacher: '' },
+    { sub: 'Programming for Problem Solving (PPS)', teacher: 'Su.S' },
+    { sub: 'Mathematics-II', teacher: 'CPA' },
     { sub: 'LUNCH', teacher: '' },
-    { sub: 'LAB', teacher: '' },
-    { sub: 'DECO', teacher: 'ADG' },
+    { sub: 'Programming for Problem Solving (PPS)', teacher: '' },
+    { sub: 'Basic Electrical Engineering (BEE)', teacher: 'ADG' },
     { sub: 'LIBRARY', teacher: '' },
   ],
   4: [ // Thursday
-    { sub: 'OS', teacher: 'SSS' },
-    { sub: 'PP', teacher: 'Su.S' },
-    { sub: 'DECO', teacher: 'ADG' },
+    { sub: 'Engineering Chemistry', teacher: 'SSS' },
+    { sub: 'Programming for Problem Solving (PPS)', teacher: 'Su.S' },
+    { sub: 'Basic Electrical Engineering (BEE)', teacher: 'ADG' },
     { sub: 'LUNCH', teacher: '' },
-    { sub: 'LAB', teacher: '' },
-    { sub: 'MM', teacher: 'MST' },
+    { sub: 'Programming for Problem Solving (PPS)', teacher: '' },
+    { sub: 'English', teacher: 'MST' },
     { sub: 'LIBRARY', teacher: '' },
   ],
   5: [ // Friday
-    { sub: 'OS', teacher: 'SSS' },
-    { sub: 'PP', teacher: 'Su.S' },
-    { sub: 'PCS', teacher: 'CPA' },
+    { sub: 'Engineering Chemistry', teacher: 'SSS' },
+    { sub: 'Programming for Problem Solving (PPS)', teacher: 'Su.S' },
+    { sub: 'Mathematics-II', teacher: 'CPA' },
     { sub: 'LUNCH', teacher: '' },
-    { sub: 'DECO', teacher: 'ADG' },
-    { sub: 'MM', teacher: 'MST' },
+    { sub: 'Basic Electrical Engineering (BEE)', teacher: 'ADG' },
+    { sub: 'English', teacher: 'MST' },
     { sub: 'LIBRARY', teacher: '' },
   ],
   6: [ // Saturday
-    { sub: 'OS', teacher: 'SSS' },
+    { sub: 'Engineering Chemistry', teacher: 'SSS' },
     { sub: 'LIBRARY', teacher: '' },
-    { sub: 'PCS', teacher: 'CPA' },
+    { sub: 'Mathematics-II', teacher: 'CPA' },
     { sub: 'LUNCH', teacher: '' },
-    { sub: 'MM', teacher: 'MST' },
-    { sub: 'LAB', teacher: '' },
-    { sub: 'PP', teacher: 'Su.S' },
+    { sub: 'English', teacher: 'MST' },
+    { sub: 'Programming for Problem Solving (PPS)', teacher: '' },
+    { sub: 'Programming for Problem Solving (PPS)', teacher: 'Su.S' },
   ],
 };
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const DAY_NAMES_HI = ['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'];
 
-const SUBJECTS = ['OS', 'PCS', 'PP', 'DECO', 'MM', 'LAB'];
+const SUBJECTS = ['Engineering Chemistry', 'Mathematics-II', 'Programming for Problem Solving (PPS)', 'Basic Electrical Engineering (BEE)', 'English'];
+
+const SYLLABUS = {
+  'Engineering Chemistry': [
+    { unit: 'Unit I', title: 'Quantum Mechanics', topics: ['Atomic and molecular orbitals', 'Schrodinger equation', 'Molecular orbital theory'] },
+    { unit: 'Unit II', title: 'Spectroscopic Techniques', topics: ['UV-Vis spectroscopy', 'IR spectroscopy', 'NMR spectroscopy'] },
+    { unit: 'Unit III', title: 'Electrochemistry', topics: ['Nernst equation', 'Free energy and EMF', 'Potentiometric titrations'] },
+    { unit: 'Unit IV', title: 'Periodic Properties', topics: ['Effective nuclear charge', 'Ionization energy', 'Electron affinity'] },
+    { unit: 'Unit V', title: 'Stereochemistry', topics: ['Isomerism', 'Chirality', 'Conformational analysis'] }
+  ],
+  'Mathematics-II': [
+    { unit: 'Unit I', title: 'Multivariable Calculus', topics: ['Partial derivatives', 'Multiple integrals', 'Vector calculus'] },
+    { unit: 'Unit II', title: 'ODEs', topics: ['First order linear equations', 'Higher order linear equations', 'Applications'] },
+    { unit: 'Unit III', title: 'Special Functions', topics: ['Beta and Gamma functions', 'Bessel functions', 'Legendre polynomials'] },
+    { unit: 'Unit IV', title: 'Matrices', topics: ['Eigenvalues and Eigenvectors', 'Cayley-Hamilton theorem', 'Orthogonal transformations'] },
+    { unit: 'Unit V', title: 'Complex Variables', topics: ['Analytic functions', 'Cauchy-Riemann equations', 'Contour integration'] }
+  ],
+  'Programming for Problem Solving (PPS)': [
+    { unit: 'Unit I', title: 'Intro', topics: ['Idea of Algorithm', 'Flowcharts', 'Introduction to C'] },
+    { unit: 'Unit II', title: 'Control Statements', topics: ['Branching', 'Loops', 'Switch cases'] },
+    { unit: 'Unit III', title: 'Arrays/Functions', topics: ['1D/2D Arrays', 'Function prototype', 'Recursion'] },
+    { unit: 'Unit IV', title: 'Structures/Pointers', topics: ['Defining structures', 'Pointer notation', 'Dynamic memory allocation'] },
+    { unit: 'Unit V', title: 'File Handling', topics: ['File operations', 'Command line arguments', 'Preprocessing'] }
+  ],
+  'Basic Electrical Engineering (BEE)': [
+    { unit: 'Unit I', title: 'DC/AC Circuits', topics: ['Kirchhoff’s laws', 'Sinusoidal steady state', 'Phasors'] },
+    { unit: 'Unit II', title: 'Transformers', topics: ['Single phase transformers', 'Efficiency', 'Regulation'] },
+    { unit: 'Unit III', title: 'Machines', topics: ['DC Machines', 'Induction Motors', 'Synchronous Machines'] },
+    { unit: 'Unit IV', title: 'Installations', topics: ['Switchgear', 'Fuses', 'Wiring'] },
+    { unit: 'Unit V', title: 'Power Electronics', topics: ['Diodes', 'Transistors', 'Inverters'] }
+  ],
+  'English': [
+    { unit: 'Unit I', title: 'Vocabulary', topics: ['Synonyms/Antonyms', 'One word substitution', 'Idioms'] },
+    { unit: 'Unit II', title: 'Writing Skills', topics: ['Sentence structure', 'Paragraph writing', 'Letter writing'] },
+    { unit: 'Unit III', title: 'Common Errors', topics: ['Subject-verb agreement', 'Articles', 'Prepositions'] },
+    { unit: 'Unit IV', title: 'Style', topics: ['Formal/Informal tone', 'Clarity', 'Conciseness'] },
+    { unit: 'Unit V', title: 'Oral Communication', topics: ['Phonetics', 'Public speaking', 'Group discussions'] }
+  ]
+};
 
 const HOLIDAYS = [
   { name: 'Makar Sankranti', date: '2026-01-15', day: 'Thursday' },
@@ -914,6 +960,14 @@ function fillModalPeriods(dateStr) {
   const dayIdx = d.getDay();
   const tt = TIMETABLE[dayIdx];
 
+  const isHoliday = HOLIDAYS.find(h => h.date === dateStr);
+
+  if (isHoliday) {
+    document.getElementById('modalPeriods').innerHTML =
+      `<p style="color:var(--yellow);font-size:0.85rem">🎉 Aaj <b>${isHoliday.name}</b> ki chutti hai! Attendance ki zaroorat nahi.</p>`;
+    return;
+  }
+
   if (!tt || dayIdx === 0 || dayIdx === 1) {
     document.getElementById('modalPeriods').innerHTML =
       '<p style="color:var(--yellow);font-size:0.85rem">Is din college nahi hota! 🎉</p>';
@@ -995,6 +1049,39 @@ function showPage(name, btn) {
   document.getElementById('page-' + name).classList.add('fadeIn');
   btn.classList.add('active');
   if (name === 'attendance') renderAttendance();
+  if (name === 'syllabus') renderSyllabus();
+}
+
+function renderSyllabus() {
+  const container = document.getElementById('syllabusContent');
+  let html = '';
+  for (const sub in SYLLABUS) {
+    html += `<div class="day-card" style="margin-bottom: 2rem;">
+      <div class="day-header">
+        <span class="day-name" style="color: var(--accent2);">${sub}</span>
+      </div>
+      <div style="padding: 1rem;">`;
+
+    SYLLABUS[sub].forEach(unit => {
+      html += `<div style="margin-bottom: 1.5rem;">
+        <h4 style="color: var(--accent3); font-size: 0.9rem; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 4px;">
+          ${unit.unit}: ${unit.title}
+        </h4>
+        <ul style="list-style: none; padding-left: 0.5rem;">`;
+
+      unit.topics.forEach(topic => {
+        html += `<li style="font-size: 0.85rem; color: var(--text); margin-bottom: 4px; display: flex; align-items: start; gap: 8px;">
+          <span style="color: var(--accent);">•</span>
+          <span>${topic}</span>
+        </li>`;
+      });
+
+      html += `</ul></div>`;
+    });
+
+    html += `</div></div>`;
+  }
+  container.innerHTML = html;
 }
 
 // ========== INIT ==========
