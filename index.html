@@ -946,7 +946,8 @@ function renderTimetable() {
 // ========== HOLIDAYS RENDER ==========
 function renderHolidays() {
   const list = document.getElementById('holidayList');
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
   const html = HOLIDAYS.map(h => {
     const isPast = h.date < todayStr;
     const isToday = h.date === todayStr;
@@ -1083,7 +1084,8 @@ function togglePeriod(dateKey, pKey) {
 }
 
 function openAddModal() {
-  const today = new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
   document.getElementById('modalDate').value = today;
   fillModalPeriods(today);
   document.getElementById('modalOverlay').classList.add('open');
