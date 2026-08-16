@@ -1,0 +1,8 @@
+# Use docker-compose for easy local deployment
+version: '3'
+services:
+  web:
+    build: .
+    ports:
+      - "8080:80"
+    restart: always

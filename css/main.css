@@ -1,0 +1,187 @@
+/* Apple-inspired design system */
+:root {
+  --bg: #000000;
+  --surface: #1c1c1e;
+  --card: #2c2c2e;
+  --border: #38383a;
+  --accent: #0a84ff; /* Apple Blue */
+  --accent2: #5e5ce6; /* Apple Indigo */
+  --accent3: #64d2ff; /* Apple Cyan */
+  --green: #30d158; /* Apple Green */
+  --red: #ff453a; /* Apple Red */
+  --yellow: #ffd60a; /* Apple Yellow */
+  --text: #ffffff;
+  --muted: #ebebf599; /* Apple secondary text */
+  --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-display);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Header */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  text-align: center;
+  padding: 1.5rem 1rem 1rem;
+  background: rgba(28, 28, 30, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+.header .college-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.5px;
+}
+.header .section-name {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* Clock section */
+.live-clock {
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.clock-block {
+  text-align: center;
+}
+.clock-time {
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(3rem, 10vw, 4.5rem);
+  font-weight: 300;
+  color: var(--text);
+  line-height: 1;
+  letter-spacing: -1px;
+}
+.clock-date {
+  font-size: 1rem;
+  color: var(--accent);
+  margin-top: 8px;
+  font-weight: 500;
+}
+
+.period-status {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  width: 100%;
+  max-width: 350px;
+}
+.period-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.period-current {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.period-next {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 6px;
+}
+.period-bar-wrap {
+  margin-top: 12px;
+  background: var(--card);
+  border-radius: 99px;
+  height: 6px;
+  overflow: hidden;
+}
+.period-bar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 99px;
+  transition: width 1s linear;
+}
+
+/* Tabs */
+.tabs-container {
+  padding: 0 1rem;
+  margin-bottom: 1rem;
+}
+.tabs {
+  display: flex;
+  background: var(--surface);
+  border-radius: 100px;
+  padding: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  flex: 1;
+  min-width: 90px;
+  padding: 0.5rem;
+  border-radius: 100px;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--text);
+  background: transparent;
+  transition: all 0.2s;
+  text-align: center;
+}
+.tab.active {
+  background: var(--card);
+  color: var(--accent);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.page { display: none; }
+.page.active { display: block; animation: fadeIn 0.3s ease; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Base Card Style for iOS look */
+.ios-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.ios-list {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+.ios-list-item {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.ios-list-item:last-child {
+  border-bottom: none;
+}
