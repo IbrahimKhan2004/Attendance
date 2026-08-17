@@ -3,8 +3,15 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+const crypto = require('crypto');
 
 dotenv.config();
+
+// Auto-generate a JWT secret if not provided in environment
+if (!process.env.JWT_SECRET) {
+    process.env.JWT_SECRET = crypto.randomBytes(64).toString('hex');
+    console.log('JWT_SECRET auto-generated');
+}
 
 const app = express();
 app.use(cors());
