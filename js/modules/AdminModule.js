@@ -1,10 +1,13 @@
 import { fetchWithAuth } from '../core/api.js';
 
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
 export class AdminModule {
   constructor() {
     this.container = document.getElementById('adminContainer');
     this.users = [];
     this.allAttendance = [];
+    this.ttDay = 1; // which day is currently open in the Timetable editor
   }
 
   async onShow() {
@@ -26,8 +29,17 @@ export class AdminModule {
 
   render() {
     const gc = window.globalConfig || {};
+    if (!gc.subjects) gc.subjects = [];
+    if (!gc.periods) gc.periods = [];
+    if (!gc.timetable) gc.timetable = {};
+    if (!gc.syllabus) gc.syllabus = [];
+    window.globalConfig = gc;
+
     const offDays = gc.offDays || [];
     const holidays = gc.holidays || [];
+    const subjects = gc.subjects;
+    const periods = gc.periods;
+    const syllabus = gc.syllabus;
 
     let holidaysHtml = holidays.map((h, i) => `
       <div style="display:flex; justify-content:space-between; align-items:center; padding: 0.5rem; border-bottom: 1px solid var(--border);">
@@ -82,9 +94,74 @@ export class AdminModule {
         </div>
 
         <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);">
-          <h4>Advanced Settings (JSON)</h4>
-          <p style="font-size:0.8rem; color:var(--muted); margin-bottom:0.5rem;">Use this to configure Syllabus, Timetable and Subjects</p>
-          <textarea id="configJson" style="width: 100%; height: 150px; background: var(--bg); color: white; border: 1px solid var(--border); padding: 0.5rem; font-family: monospace;">${JSON.stringify({timetable: gc.timetable, periods: gc.periods, subjects: gc.subjects, syllabus: gc.syllabus}, null, 2)}</textarea>
+          <h4>Subjects</h4>
+          <div id="subjectsChips" style="display:flex; gap:0.5rem; flex-wrap:wrap; margin: 0.5rem 0;">
+            ${subjects.map((s, i) => `
+              <span style="display:flex; align-items:center; gap:6px; background:var(--bg); border:1px solid var(--border); padding:4px 8px; border-radius:16px; font-size:0.85rem;">
+                ${s}
+                <button onclick="window.adminModule.deleteSubject(${i})" style="background:none; border:none; color:var(--accent2); cursor:pointer; font-weight:700; padding:0;">✕</button>
+              </span>
+            `).join('')}
+          </div>
+          <div style="display:flex; gap:0.5rem;">
+            <input type="text" id="newSubjectInput" placeholder="e.g. DBMS" style="flex:1; padding:8px; border-radius:4px; border:1px solid var(--border); background:var(--bg); color:white;">
+            <button onclick="window.adminModule.addSubject()" style="background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; font-weight:600;">+ Add</button>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);">
+          <h4>Periods (time slots, same every day)</h4>
+          <div id="periodsList" style="margin-top:0.5rem;">
+            ${periods.map((p, i) => `
+              <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.5rem;">
+                <input type="text" id="pdLabel_${i}" value="${p.label ?? (i+1)}" placeholder="#" style="width:40px; padding:6px; border-radius:4px; border:1px solid var(--border); background:var(--bg); color:white; text-align:center;">
+                <input type="time" id="pdStart_${i}" value="${p.start || ''}" style="flex:1; padding:6px; border-radius:4px; border:1px solid var(--border); background:var(--bg); color:white; color-scheme: dark;">
+                <span style="color:var(--muted);">to</span>
+                <input type="time" id="pdEnd_${i}" value="${p.end || ''}" style="flex:1; padding:6px; border-radius:4px; border:1px solid var(--border); background:var(--bg); color:white; color-scheme: dark;">
+                <button onclick="window.adminModule.deletePeriod(${i})" style="background:var(--accent2); color:white; border:none; padding:6px 10px; border-radius:4px;">Del</button>
+              </div>
+            `).join('')}
+          </div>
+          <button onclick="window.adminModule.addPeriod()" style="background:var(--surface); border:1px solid var(--border); color:white; padding:6px 10px; border-radius:4px;">+ Add Period</button>
+        </div>
+
+        <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);">
+          <h4>Timetable</h4>
+          <p style="font-size:0.8rem; color:var(--muted); margin-bottom:0.5rem;">Pick a subject for each period, per day. Add periods above first.</p>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+            ${DAY_NAMES.map((d, i) => `
+              <button onclick="window.adminModule.selectTTDay(${i})" style="background:${i === this.ttDay ? 'var(--accent)' : 'var(--bg)'}; color:white; border:1px solid var(--border); padding:6px 10px; border-radius:6px; font-size:0.8rem;">${d}</button>
+            `).join('')}
+          </div>
+          <div id="ttDayEditor">
+            ${this.renderTTDayEditor(gc)}
+          </div>
+        </div>
+
+        <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);">
+          <h4>Syllabus</h4>
+          <p style="font-size:0.8rem; color:var(--muted); margin-bottom:0.5rem;">Units per subject.</p>
+          <div id="syllabusEditor">
+            ${syllabus.map((s, si) => `
+              <div style="border:1px solid var(--border); border-radius:8px; padding:0.75rem; margin-bottom:0.75rem; background:var(--bg);">
+                <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+                  <input type="text" id="sylSubject_${si}" value="${s.subject || ''}" placeholder="Subject" style="flex:1; padding:6px; border-radius:4px; border:1px solid var(--border); background:var(--surface); color:white;">
+                  <button onclick="window.adminModule.deleteSyllabusSubject(${si})" style="background:var(--accent2); color:white; border:none; padding:6px 10px; border-radius:4px;">Del</button>
+                </div>
+                <div id="sylUnits_${si}">
+                  ${(s.units || []).map((u, ui) => `
+                    <div style="display:flex; gap:0.5rem; margin-bottom:0.4rem;">
+                      <input type="text" id="sylUnitTitle_${si}_${ui}" value="${u.title || ''}" placeholder="Unit title" style="flex:1; padding:6px; border-radius:4px; border:1px solid var(--border); background:var(--surface); color:white;">
+                      <input type="text" id="sylUnitDesc_${si}_${ui}" value="${u.desc || ''}" placeholder="Description" style="flex:2; padding:6px; border-radius:4px; border:1px solid var(--border); background:var(--surface); color:white;">
+                      <button onclick="window.adminModule.deleteSyllabusUnit(${si},${ui})" style="background:var(--accent2); color:white; border:none; padding:6px 10px; border-radius:4px;">✕</button>
+                    </div>
+                  `).join('')}
+                </div>
+                <button onclick="window.adminModule.addSyllabusUnit(${si})" style="background:var(--surface); border:1px solid var(--border); color:white; padding:4px 8px; border-radius:4px; font-size:0.8rem;">+ Add Unit</button>
+              </div>
+            `).join('')}
+          </div>
+          <button onclick="window.adminModule.addSyllabusSubject()" style="background:var(--surface); border:1px solid var(--border); color:white; padding:6px 10px; border-radius:4px;">+ Add Subject to Syllabus</button>
         </div>
 
         <button onclick="window.adminModule.saveConfig()" style="background:var(--accent); color:white; border:none; padding:8px 16px; border-radius:8px; font-weight:600; width:100%;">Save Global Config</button>
@@ -132,6 +209,114 @@ export class AdminModule {
     window.adminModule = this;
   }
 
+  renderTTDayEditor(gc) {
+    const periods = gc.periods || [];
+    const subjects = gc.subjects || [];
+    if (!gc.timetable) gc.timetable = {};
+    if (!gc.timetable[this.ttDay]) gc.timetable[this.ttDay] = [];
+    const dayEntries = gc.timetable[this.ttDay];
+
+    if (periods.length === 0) {
+      return `<p style="color:var(--muted); font-size:0.85rem;">No periods yet — add periods above first.</p>`;
+    }
+
+    return periods.map((p, i) => {
+      const current = dayEntries[i] || { sub: '', teacher: '' };
+      const label = p.label || (i + 1);
+      const timeStr = (p.start && p.end) ? `${p.start}–${p.end}` : '';
+      return `
+        <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.5rem;">
+          <span style="width:70px; font-size:0.75rem; color:var(--muted);">P${label}<br>${timeStr}</span>
+          <select id="ttSub_${i}" onchange="window.adminModule.setTTCell(${i}, 'sub', this.value)" style="flex:1; padding:6px; border-radius:4px; border:1px solid var(--border); background:var(--bg); color:white;">
+            <option value="">-- OFF / Free --</option>
+            <option value="LUNCH" ${current.sub === 'LUNCH' ? 'selected' : ''}>LUNCH</option>
+            ${subjects.map(s => `<option value="${s}" ${current.sub === s ? 'selected' : ''}>${s}</option>`).join('')}
+          </select>
+          <input type="text" id="ttTeacher_${i}" value="${current.teacher || ''}" placeholder="Teacher (optional)" oninput="window.adminModule.setTTCell(${i}, 'teacher', this.value)" style="flex:1; padding:6px; border-radius:4px; border:1px solid var(--border); background:var(--bg); color:white;">
+        </div>
+      `;
+    }).join('');
+  }
+
+  selectTTDay(dayIdx) {
+    this.ttDay = dayIdx;
+    this.render();
+  }
+
+  setTTCell(periodIdx, field, value) {
+    const gc = window.globalConfig;
+    if (!gc.timetable[this.ttDay]) gc.timetable[this.ttDay] = [];
+    if (!gc.timetable[this.ttDay][periodIdx]) gc.timetable[this.ttDay][periodIdx] = { sub: '', teacher: '' };
+    gc.timetable[this.ttDay][periodIdx][field] = value;
+    // no full re-render needed for teacher text input; re-render only for subject select to keep UI in sync
+    if (field === 'sub') this.render();
+  }
+
+  addSubject() {
+    const input = document.getElementById('newSubjectInput');
+    const val = (input.value || '').trim();
+    if (!val) return;
+    const gc = window.globalConfig;
+    if (!gc.subjects) gc.subjects = [];
+    if (gc.subjects.includes(val)) return alert('Subject already exists.');
+    gc.subjects.push(val);
+    this.render();
+  }
+
+  deleteSubject(index) {
+    const gc = window.globalConfig;
+    gc.subjects.splice(index, 1);
+    this.render();
+  }
+
+  addPeriod() {
+    const gc = window.globalConfig;
+    if (!gc.periods) gc.periods = [];
+    const n = gc.periods.length + 1;
+    gc.periods.push({ label: String(n), start: '09:00', end: '10:00' });
+    this.render();
+  }
+
+  deletePeriod(index) {
+    const gc = window.globalConfig;
+    gc.periods.splice(index, 1);
+    // keep each day's timetable entries aligned with the removed period index
+    if (gc.timetable) {
+      Object.keys(gc.timetable).forEach(day => {
+        if (Array.isArray(gc.timetable[day])) gc.timetable[day].splice(index, 1);
+      });
+    }
+    this.render();
+  }
+
+  addSyllabusSubject() {
+    const gc = window.globalConfig;
+    if (!gc.syllabus) gc.syllabus = [];
+    gc.syllabus.push({ subject: '', units: [] });
+    this.render();
+  }
+
+  deleteSyllabusSubject(index) {
+    const gc = window.globalConfig;
+    gc.syllabus.splice(index, 1);
+    this.render();
+  }
+
+  addSyllabusUnit(subjectIndex) {
+    this._syncUI();
+    const gc = window.globalConfig;
+    if (!gc.syllabus[subjectIndex].units) gc.syllabus[subjectIndex].units = [];
+    gc.syllabus[subjectIndex].units.push({ title: '', desc: '' });
+    this.render();
+  }
+
+  deleteSyllabusUnit(subjectIndex, unitIndex) {
+    this._syncUI();
+    const gc = window.globalConfig;
+    gc.syllabus[subjectIndex].units.splice(unitIndex, 1);
+    this.render();
+  }
+
   _syncUI() {
       const gc = window.globalConfig || {};
 
@@ -165,15 +350,39 @@ export class AdminModule {
           }
       }
 
-      const txt = document.getElementById('configJson');
-      if (txt) {
-          try {
-              const advJson = JSON.parse(txt.value);
-              gc.timetable = advJson.timetable;
-              gc.periods = advJson.periods;
-              gc.subjects = advJson.subjects;
-              gc.syllabus = advJson.syllabus;
-          } catch(e) {}
+      if (gc.periods) {
+          for (let i = 0; i < gc.periods.length; i++) {
+              const labelInput = document.getElementById('pdLabel_' + i);
+              const startInput = document.getElementById('pdStart_' + i);
+              const endInput = document.getElementById('pdEnd_' + i);
+              if (labelInput) gc.periods[i].label = labelInput.value;
+              if (startInput) gc.periods[i].start = startInput.value;
+              if (endInput) gc.periods[i].end = endInput.value;
+          }
+      }
+
+      if (gc.timetable && gc.timetable[this.ttDay] && gc.periods) {
+          for (let i = 0; i < gc.periods.length; i++) {
+              const teacherInput = document.getElementById('ttTeacher_' + i);
+              if (teacherInput) {
+                  if (!gc.timetable[this.ttDay][i]) gc.timetable[this.ttDay][i] = { sub: '', teacher: '' };
+                  gc.timetable[this.ttDay][i].teacher = teacherInput.value;
+              }
+          }
+      }
+
+      if (gc.syllabus) {
+          for (let si = 0; si < gc.syllabus.length; si++) {
+              const subjInput = document.getElementById('sylSubject_' + si);
+              if (subjInput) gc.syllabus[si].subject = subjInput.value;
+              const units = gc.syllabus[si].units || [];
+              for (let ui = 0; ui < units.length; ui++) {
+                  const titleInput = document.getElementById(`sylUnitTitle_${si}_${ui}`);
+                  const descInput = document.getElementById(`sylUnitDesc_${si}_${ui}`);
+                  if (titleInput) units[ui].title = titleInput.value;
+                  if (descInput) units[ui].desc = descInput.value;
+              }
+          }
       }
   }
 
@@ -219,7 +428,7 @@ export class AdminModule {
               alert('Failed to save config.');
           }
       } catch (e) {
-          alert('Invalid JSON in Advanced Settings format.');
+          alert('Error saving configuration.');
       }
   }
 
