@@ -1,5 +1,3 @@
-import { SYLLABUS_DATA } from '../data/syllabusData.js';
-
 export class SyllabusModule {
   constructor() {
     this.containerId = 'syllabusContainer';
@@ -13,6 +11,9 @@ export class SyllabusModule {
   render() {
     const container = document.getElementById(this.containerId);
     if (!container) return;
+    const { syllabus: SYLLABUS_DATA } = window.globalConfig;
+
+    if (!SYLLABUS_DATA) return;
 
     const html = SYLLABUS_DATA.map((subject, index) => {
       const unitsHtml = subject.units.map(u => `

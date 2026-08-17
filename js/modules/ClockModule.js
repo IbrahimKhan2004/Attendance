@@ -1,4 +1,3 @@
-import { PERIODS, TIMETABLE, HOLIDAYS } from '../data/constants.js';
 import { timeToMins, formatTime12, getTodayDateString } from '../utils/timeUtils.js';
 
 export class ClockModule {
@@ -41,8 +40,15 @@ export class ClockModule {
     const nextElem = document.getElementById('nextPeriod');
     const barElem = document.getElementById('periodBar');
 
-    if (dayIdx === 0 || dayIdx === 1) {
-      currElem.textContent = dayIdx === 0 ? '😴 Sunday — Chill Day!' : '🎉 Monday — OFF Day!';
+    const { offDays, timetable: TIMETABLE, holidays: HOLIDAYS, periods: PERIODS } = window.globalConfig;
+
+    if (!PERIODS || PERIODS.length === 0 || !TIMETABLE) {
+        currElem.textContent = 'Configuration loading...';
+        return;
+    }
+
+    if (offDays && offDays.includes(dayIdx)) {
+      currElem.textContent = `🎉 Day OFF!`;
       nextElem.textContent = '';
       barElem.style.width = '0%';
       return;
@@ -55,7 +61,7 @@ export class ClockModule {
     }
 
     const todayStr = getTodayDateString();
-    const isHoliday = HOLIDAYS.find(h => h.date === todayStr);
+    const isHoliday = HOLIDAYS && HOLIDAYS.find(h => h.date === todayStr);
     if (isHoliday) {
       currElem.textContent = `🎊 ${isHoliday.name} — Holiday!`;
       nextElem.textContent = '';
@@ -91,6 +97,7 @@ export class ClockModule {
 
     if (currentIdx !== -1) {
       const pd = TIMETABLE[dayIdx][currentIdx];
+      if (!pd) return; // In case of missing period in timetable
       const s = timeToMins(PERIODS[currentIdx].start);
       const e = timeToMins(PERIODS[currentIdx].end);
       const elapsed = mins - s;
@@ -101,7 +108,7 @@ export class ClockModule {
       currElem.textContent = `Period ${PERIODS[currentIdx].label}: ${pd.sub}${pd.teacher ? ' ('+pd.teacher+')' : ''}`;
       barElem.style.width = pct + '%';
 
-      if (currentIdx + 1 < PERIODS.length) {
+      if (currentIdx + 1 < PERIODS.length && TIMETABLE[dayIdx][currentIdx + 1]) {
         const next = TIMETABLE[dayIdx][currentIdx + 1];
         nextElem.textContent = `⏳ ${remaining} min left | Next: ${next.sub} at ${formatTime12(PERIODS[currentIdx + 1].start)}`;
       } else {

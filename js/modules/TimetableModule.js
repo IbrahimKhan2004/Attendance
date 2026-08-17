@@ -1,5 +1,5 @@
-import { TIMETABLE, PERIODS, DAY_NAMES } from '../data/constants.js';
 import { timeToMins, formatTime12 } from '../utils/timeUtils.js';
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export class TimetableModule {
   constructor() {
@@ -28,8 +28,11 @@ export class TimetableModule {
         ${isToday ? '<span style="font-size:0.7rem; background:var(--accent); padding:2px 8px; border-radius:10px; font-weight:600;">TODAY</span>' : ''}
       </div>`);
 
-      if (dayOff) {
-        const msg = dayIdx === 0 ? 'Sunday — Stay home!' : 'Monday — Official OFF!';
+      const { timetable: TIMETABLE, periods: PERIODS, offDays } = window.globalConfig;
+      const isOff = offDays && offDays.includes(dayIdx);
+
+      if (isOff || !TIMETABLE || !TIMETABLE[dayIdx]) {
+        const msg = (dayIdx === 0) ? 'Sunday — Stay home!' : 'Official OFF!';
         html.push(`<div class="ios-list-item" style="text-align:center; padding: 2rem 1rem; color: var(--muted);">${msg}</div>`);
       } else {
         const periods = TIMETABLE[dayIdx];

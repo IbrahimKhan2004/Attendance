@@ -1,4 +1,3 @@
-import { HOLIDAYS } from '../data/constants.js';
 import { getTodayDateString } from '../utils/timeUtils.js';
 
 export class HolidaysModule {
@@ -15,6 +14,9 @@ export class HolidaysModule {
     if (!list) return;
 
     const todayStr = getTodayDateString();
+    const { holidays: HOLIDAYS } = window.globalConfig;
+
+    if (!HOLIDAYS) return;
 
     const html = HOLIDAYS.map(h => {
       const isPast = h.date < todayStr;

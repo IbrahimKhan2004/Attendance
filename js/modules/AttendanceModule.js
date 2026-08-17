@@ -1,14 +1,37 @@
-import { SUBJECTS, PERIODS, TIMETABLE, HOLIDAYS, DAY_NAMES } from '../data/constants.js';
-import { getAttData, saveAttData } from '../utils/storageUtils.js';
 import { getTodayDateString, formatTime12 } from '../utils/timeUtils.js';
+import { fetchWithAuth } from '../core/api.js';
+
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export class AttendanceModule {
   constructor() {
     this.bindEvents();
   }
 
-  onShow() {
+  async onShow() {
+    await this.fetchData();
     this.render();
+  }
+
+  async fetchData() {
+    try {
+      const res = await fetchWithAuth('/attendance');
+      if (res.ok) {
+        const list = await res.json();
+        // Convert array to internal map format { "YYYY-MM-DD": { "SUB_SLOT": "P"|"A" } }
+        this.attData = {};
+        list.forEach(item => {
+           this.attData[item.date] = {};
+           item.records.forEach((r, i) => {
+               // mock a slot name like SUB_I
+               this.attData[item.date][`${r.subject}_S${i}`] = r.status === 'present' ? 'P' : 'A';
+           });
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      this.attData = {};
+    }
   }
 
   bindEvents() {
@@ -33,13 +56,16 @@ export class AttendanceModule {
     let total = 0, present = 0;
     const subTotals = {};
     const subPresent = {};
-    SUBJECTS.forEach(s => { subTotals[s] = 0; subPresent[s] = 0; });
+    const { subjects: SUBJECTS } = window.globalConfig;
+    if (SUBJECTS) {
+        SUBJECTS.forEach(s => { subTotals[s] = 0; subPresent[s] = 0; });
+    }
 
     for (const dateKey in data) {
       const day = data[dateKey];
       for (const pKey in day) {
         const sub = pKey.split('_')[0];
-        if (!SUBJECTS.includes(sub)) continue;
+        if (SUBJECTS && !SUBJECTS.includes(sub)) continue;
         total++;
         subTotals[sub] = (subTotals[sub] || 0) + 1;
         if (day[pKey] === 'P') {
@@ -52,7 +78,10 @@ export class AttendanceModule {
   }
 
   render() {
-    const data = getAttData();
+    const { subjects: SUBJECTS } = window.globalConfig;
+    if (!SUBJECTS) return;
+
+    const data = this.attData || {};
     const { total, present, subTotals, subPresent } = this.calcStats(data);
     const pct = total === 0 ? 0 : Math.round((present / total) * 100);
 
@@ -135,10 +164,22 @@ export class AttendanceModule {
         </button>`;
       }).join('');
       return `<div class="ios-list-item">
-        <div style="font-size:0.85rem; font-weight:600; color:var(--muted); margin-bottom:0.5rem;">${dateKey.slice(5)} • ${dayName}</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+          <div style="font-size:0.85rem; font-weight:600; color:var(--muted);">${dateKey.slice(5)} • ${dayName}</div>
+          <button onclick="window.deleteAttendanceDay('${dateKey}')" style="background:var(--accent2); color:white; border:none; border-radius:4px; padding:2px 6px; font-size:0.7rem;">Delete</button>
+        </div>
         <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">${pBtns}</div>
       </div>`;
     }).join('');
+
+    window.deleteAttendanceDay = async (dateStr) => {
+        if(!confirm(`Delete attendance for ${dateStr}?`)) return;
+        try {
+            await fetchWithAuth(`/attendance/${dateStr}`, { method: 'DELETE' });
+            await this.fetchData();
+            this.render();
+        } catch(e) { alert('Error deleting'); }
+    };
 
     const logElem = document.getElementById('attLog');
     if (logElem) {
@@ -146,12 +187,25 @@ export class AttendanceModule {
     }
   }
 
-  togglePeriod(dateKey, pKey) {
-    const data = getAttData();
+  async togglePeriod(dateKey, pKey) {
+    const data = this.attData;
     if (!data[dateKey]) return;
     data[dateKey][pKey] = data[dateKey][pKey] === 'P' ? 'A' : 'P';
-    saveAttData(data);
-    this.render();
+
+    // convert back to server format and save
+    const records = Object.keys(data[dateKey]).map(k => ({
+        subject: k.split('_')[0],
+        status: data[dateKey][k] === 'P' ? 'present' : 'absent'
+    }));
+
+    try {
+        await fetchWithAuth('/attendance', {
+            method: 'POST',
+            body: JSON.stringify({ date: dateKey, records })
+        });
+        await this.fetchData();
+        this.render();
+    } catch(e) { console.error(e); }
   }
 
   openAddModal() {
@@ -167,18 +221,21 @@ export class AttendanceModule {
 
   fillModalPeriods(dateStr, overrideDay = null) {
     if (!dateStr) return;
+    const { timetable: TIMETABLE, periods: PERIODS, holidays: HOLIDAYS, offDays, subjects: SUBJECTS } = window.globalConfig;
+    if (!TIMETABLE || !PERIODS) return;
+
     const d = new Date(dateStr);
     const dayIdx = overrideDay !== null ? parseInt(overrideDay) : d.getDay();
     const tt = TIMETABLE[dayIdx];
 
-    const isHoliday = HOLIDAYS.find(h => h.date === dateStr);
+    const isHoliday = HOLIDAYS && HOLIDAYS.find(h => h.date === dateStr);
     if (isHoliday) {
       document.getElementById('modalPeriods').innerHTML =
         `<div style="color:var(--yellow); text-align:center; padding:1rem;">Today is ${isHoliday.name}!<br>No attendance on holidays 🎉</div>`;
       return;
     }
 
-    const isOffDay = !TIMETABLE[d.getDay()] || d.getDay() === 0 || d.getDay() === 1;
+    const isOffDay = !TIMETABLE[d.getDay()] || (offDays && offDays.includes(d.getDay()));
     let offDayHtml = '';
     if (isOffDay) {
       offDayHtml = `
@@ -206,7 +263,7 @@ export class AttendanceModule {
       return;
     }
 
-    const existingData = getAttData()[dateStr] || {};
+    const existingData = this.attData[dateStr] || {};
     let html = overrideDay !== null ? offDayHtml : '';
 
     html += '<div class="ios-list">';
@@ -260,11 +317,13 @@ export class AttendanceModule {
     }
   }
 
-  saveAttendance() {
+  async saveAttendance() {
     const dateStr = document.getElementById('modalDate').value;
     if (!dateStr) return;
 
-    const isHoliday = HOLIDAYS.find(h => h.date === dateStr);
+    const { timetable: TIMETABLE, periods: PERIODS, holidays: HOLIDAYS } = window.globalConfig;
+
+    const isHoliday = HOLIDAYS && HOLIDAYS.find(h => h.date === dateStr);
     if (isHoliday) {
       this.closeModal();
       return;
@@ -276,8 +335,7 @@ export class AttendanceModule {
     const tt = TIMETABLE[dayIdx];
     if (!tt) { this.closeModal(); return; }
 
-    const data = getAttData();
-    if (!data[dateStr]) data[dateStr] = {};
+    const records = [];
 
     PERIODS.forEach((p, i) => {
       const sub = tt[i].sub;
@@ -287,20 +345,23 @@ export class AttendanceModule {
       const btn = document.getElementById('mbtn_' + key);
 
       if (subSelect && btn) {
-        for (const existingKey in data[dateStr]) {
-          if (existingKey.endsWith('_' + p.slot)) {
-            delete data[dateStr][existingKey];
-          }
-        }
-        const selectedSub = subSelect.value;
-        const actualKey = `${selectedSub}_${p.slot}`;
-        // rely on textContent logic we defined above
-        data[dateStr][actualKey] = btn.textContent.includes('Present') ? 'P' : 'A';
+        records.push({
+            subject: subSelect.value,
+            status: btn.textContent.includes('Present') ? 'present' : 'absent'
+        });
       }
     });
 
-    saveAttData(data);
-    this.closeModal();
-    this.render();
+    try {
+        await fetchWithAuth('/attendance', {
+            method: 'POST',
+            body: JSON.stringify({ date: dateStr, records })
+        });
+        this.closeModal();
+        await this.fetchData();
+        this.render();
+    } catch(e) {
+        alert("Failed to save attendance");
+    }
   }
 }

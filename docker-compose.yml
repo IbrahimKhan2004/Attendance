@@ -4,5 +4,10 @@ services:
   web:
     build: .
     ports:
-      - "8080:80"
+      - "8080:8080"
     restart: always
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
