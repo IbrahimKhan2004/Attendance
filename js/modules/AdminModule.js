@@ -78,7 +78,7 @@ export class AdminModule {
           <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top: 0.5rem;">
             ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => `
               <label style="display:flex; align-items:center; gap:0.25rem;">
-                <input type="checkbox" id="offDay_${i}" value="${i}" ${offDays.includes(i) ? 'checked' : ''}>
+                <input type="checkbox" id="offDay_${i}" value="${i}" ${offDays.includes(i) ? 'checked' : ''} onchange="window.adminModule.toggleOffDay(${i}, this.checked)">
                 ${d}
               </label>
             `).join('')}
@@ -129,12 +129,12 @@ export class AdminModule {
           <h4>Timetable</h4>
           <p style="font-size:0.8rem; color:var(--muted); margin-bottom:0.5rem;">Pick a subject for each period, per day. Add periods above first.</p>
           <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;">
-            ${DAY_NAMES.map((d, i) => `
+            ${DAY_NAMES.map((d, i) => offDays.includes(i) ? '' : `
               <button onclick="window.adminModule.selectTTDay(${i})" style="background:${i === this.ttDay ? 'var(--accent)' : 'var(--bg)'}; color:white; border:1px solid var(--border); padding:6px 10px; border-radius:6px; font-size:0.8rem;">${d}</button>
             `).join('')}
           </div>
           <div id="ttDayEditor">
-            ${this.renderTTDayEditor(gc)}
+            ${offDays.includes(this.ttDay) ? `<p style="color:var(--muted); font-size:0.85rem;">This day is OFF.</p>` : this.renderTTDayEditor(gc)}
           </div>
         </div>
 
@@ -236,6 +236,23 @@ export class AdminModule {
         </div>
       `;
     }).join('');
+  }
+
+  toggleOffDay(dayIdx, checked) {
+      this._syncUI();
+      const gc = window.globalConfig;
+      if (!gc.offDays) gc.offDays = [];
+      if (checked) {
+          if (!gc.offDays.includes(dayIdx)) gc.offDays.push(dayIdx);
+      } else {
+          gc.offDays = gc.offDays.filter(d => d !== dayIdx);
+      }
+      // if the currently open timetable day just became OFF, jump to the next working day
+      if (gc.offDays.includes(this.ttDay)) {
+          const nextWorking = [1, 2, 3, 4, 5, 6, 0].find(d => !gc.offDays.includes(d));
+          if (nextWorking !== undefined) this.ttDay = nextWorking;
+      }
+      this.render();
   }
 
   selectTTDay(dayIdx) {
