@@ -10,9 +10,24 @@
 </head>
 <body>
 
+<!-- LOGIN VIEW -->
+<div id="loginView" style="display:none; flex-direction:column; align-items:center; justify-content:center; height:100vh; padding:1rem;">
+  <div class="ios-card" style="width:100%; max-width:400px; padding:2rem;">
+    <h2 style="font-size:1.5rem; font-weight:700; margin-bottom:1.5rem; text-align:center;">Sign In</h2>
+    <input type="text" id="loginUsername" placeholder="Username" style="width:100%; padding:12px; background:var(--surface); border:1px solid var(--border); border-radius:8px; color:white; margin-bottom:1rem;">
+    <input type="password" id="loginPassword" placeholder="Password" style="width:100%; padding:12px; background:var(--surface); border:1px solid var(--border); border-radius:8px; color:white; margin-bottom:1.5rem;">
+    <button onclick="window.handleLogin()" style="width:100%; padding:12px; background:var(--accent); border:none; color:white; border-radius:10px; font-weight:600; font-size:1rem;">Login</button>
+    <div id="loginError" style="color:var(--accent2); margin-top:1rem; text-align:center; font-size:0.9rem; display:none;"></div>
+  </div>
+</div>
+
+<!-- MAIN APP VIEW -->
+<div id="appView" style="display:none;">
+
 <div class="header">
-  <div class="college-name">School of Management Sciences</div>
-  <div class="section-name">Varanasi &nbsp;•&nbsp; BCA-II Section C &nbsp;•&nbsp; 2026</div>
+  <div class="college-name" id="headerCollegeName">Loading...</div>
+  <div class="section-name" id="headerSectionName">Loading...</div>
+  <button onclick="window.handleLogout()" style="position:absolute; right:1rem; top:1rem; background:var(--surface); color:var(--muted); border:1px solid var(--border); padding:4px 8px; border-radius:6px; font-size:0.7rem;">Logout</button>
 </div>
 
 <div class="live-clock">
@@ -82,6 +97,11 @@
   <div id="syllabusContainer"></div>
 </div>
 
+<!-- ADMIN PAGE -->
+<div class="page" id="page-admin" style="padding: 0 1rem;">
+  <div id="adminContainer"></div>
+</div>
+
 <!-- Add Attendance Modal -->
 <div id="modalOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(5px); z-index:100; align-items:center; justify-content:center; padding:1rem;">
   <div class="ios-card" style="width:100%; max-width:400px; max-height:80vh; display:flex; flex-direction:column; padding:0;">
@@ -101,7 +121,10 @@
   </div>
 </div>
 
+</div> <!-- END MAIN APP VIEW -->
+
 <!-- Initialize Application -->
+<script type="module" src="js/core/auth.js"></script>
 <script type="module" src="js/core/app.js"></script>
 
 </body>
