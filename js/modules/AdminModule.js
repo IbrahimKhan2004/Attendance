@@ -35,7 +35,13 @@ export class AdminModule {
     if (!gc.syllabus) gc.syllabus = [];
     window.globalConfig = gc;
 
-    const offDays = gc.offDays || [];
+    const offDays = (gc.offDays || []).map(Number);
+    gc.offDays = offDays;
+
+    // backfill: older periods saved without a `slot` identifier broke attendance keys ("undefined (time)")
+    gc.periods.forEach((p, i) => {
+      if (!p.slot) p.slot = p.label || String(i + 1);
+    });
     const holidays = gc.holidays || [];
     const subjects = gc.subjects;
     const periods = gc.periods;
@@ -239,16 +245,18 @@ export class AdminModule {
   }
 
   toggleOffDay(dayIdx, checked) {
+      dayIdx = Number(dayIdx);
       this._syncUI();
       const gc = window.globalConfig;
       if (!gc.offDays) gc.offDays = [];
+      gc.offDays = gc.offDays.map(Number);
       if (checked) {
           if (!gc.offDays.includes(dayIdx)) gc.offDays.push(dayIdx);
       } else {
           gc.offDays = gc.offDays.filter(d => d !== dayIdx);
       }
       // if the currently open timetable day just became OFF, jump to the next working day
-      if (gc.offDays.includes(this.ttDay)) {
+      if (gc.offDays.includes(Number(this.ttDay))) {
           const nextWorking = [1, 2, 3, 4, 5, 6, 0].find(d => !gc.offDays.includes(d));
           if (nextWorking !== undefined) this.ttDay = nextWorking;
       }
@@ -256,7 +264,7 @@ export class AdminModule {
   }
 
   selectTTDay(dayIdx) {
-    this.ttDay = dayIdx;
+    this.ttDay = Number(dayIdx);
     this.render();
   }
 
@@ -290,7 +298,7 @@ export class AdminModule {
     const gc = window.globalConfig;
     if (!gc.periods) gc.periods = [];
     const n = gc.periods.length + 1;
-    gc.periods.push({ label: String(n), start: '09:00', end: '10:00' });
+    gc.periods.push({ label: String(n), slot: String(n), start: '09:00', end: '10:00' });
     this.render();
   }
 
@@ -372,7 +380,7 @@ export class AdminModule {
               const labelInput = document.getElementById('pdLabel_' + i);
               const startInput = document.getElementById('pdStart_' + i);
               const endInput = document.getElementById('pdEnd_' + i);
-              if (labelInput) gc.periods[i].label = labelInput.value;
+              if (labelInput) { gc.periods[i].label = labelInput.value; gc.periods[i].slot = labelInput.value; }
               if (startInput) gc.periods[i].start = startInput.value;
               if (endInput) gc.periods[i].end = endInput.value;
           }
