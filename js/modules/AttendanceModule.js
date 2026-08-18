@@ -43,13 +43,13 @@ export class AttendanceModule {
     window.togglePeriod = (dateKey, pKey) => this.togglePeriod(dateKey, pKey);
     window.fillModalPeriods = (dateStr, overrideDay) => this.fillModalPeriods(dateStr, overrideDay);
 
-    // Modal date change listener
-    document.addEventListener('DOMContentLoaded', () => {
-      const modalDate = document.getElementById('modalDate');
-      if (modalDate) {
-        modalDate.addEventListener('change', (e) => this.fillModalPeriods(e.target.value));
-      }
-    });
+    // Modal date change listener.
+    // Module scripts are deferred, so DOMContentLoaded has usually already
+    // fired by the time this runs — attach directly instead of waiting on it.
+    const modalDate = document.getElementById('modalDate');
+    if (modalDate) {
+      modalDate.addEventListener('change', (e) => this.fillModalPeriods(e.target.value));
+    }
   }
 
   calcStats(data) {
