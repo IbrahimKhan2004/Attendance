@@ -205,7 +205,27 @@ export class AdminModule {
               </div>
             `).join('')}
           </div>
-          <button onclick="window.adminModule.addSyllabusSubject()" style="background:var(--surface); border:1px solid var(--border); color:white; padding:6px 10px; border-radius:4px;">+ Add Subject to Syllabus</button>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <button onclick="window.adminModule.addSyllabusSubject()" style="background:var(--surface); border:1px solid var(--border); color:white; padding:6px 10px; border-radius:4px;">+ Add Subject to Syllabus</button>
+            <button onclick="window.adminModule.openSyllabusImportModal()" style="background:var(--bg); border:1px solid var(--accent); color:var(--accent); padding:6px 10px; border-radius:4px; font-weight:600;">⇪ Import from JSON</button>
+          </div>
+        </div>
+
+        <div id="syllabusImportModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center; padding:1rem;">
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:1.25rem; max-width:640px; width:100%; max-height:85vh; overflow-y:auto;">
+            <h3 style="margin-top:0;">Import Syllabus JSON</h3>
+            <p style="font-size:0.8rem; color:var(--muted);">Paste a JSON syllabus in the format below. Subjects with "units" (each unit has a title + list of topics) and lab-style subjects with "practical_exercises" (a flat list) are both supported — this <b>adds to</b> the existing syllabus (doesn't remove subjects already there). Use "Copy AI Prompt" to get a prompt for generating this from your syllabus PDF/notes.</p>
+            <div style="display:flex; gap:0.5rem; margin:0.75rem 0;">
+              <button onclick="window.adminModule.copySyllabusImportPrompt()" style="flex:1; background:var(--bg); border:1px solid var(--border); color:white; padding:8px; border-radius:6px; font-weight:600;">📋 Copy AI Prompt</button>
+              <button onclick="window.adminModule.showSyllabusImportExample()" style="flex:1; background:var(--bg); border:1px solid var(--border); color:white; padding:8px; border-radius:6px; font-weight:600;">Load Example</button>
+            </div>
+            <textarea id="syllabusImportInput" placeholder='Paste JSON here...' style="width:100%; min-height:220px; background:var(--bg); color:white; border:1px solid var(--border); border-radius:6px; padding:8px; font-family:var(--font-mono,monospace); font-size:0.8rem;"></textarea>
+            <div id="syllabusImportError" style="color:var(--accent2); font-size:0.8rem; margin-top:0.5rem;"></div>
+            <div style="display:flex; gap:0.5rem; margin-top:0.75rem;">
+              <button onclick="window.adminModule.closeSyllabusImportModal()" style="flex:1; background:var(--bg); border:1px solid var(--border); color:white; padding:8px; border-radius:6px;">Cancel</button>
+              <button onclick="window.adminModule.applySyllabusImportJson()" style="flex:1; background:var(--accent); border:none; color:white; padding:8px; border-radius:6px; font-weight:700;">Apply</button>
+            </div>
+          </div>
         </div>
 
         <button onclick="window.adminModule.saveConfig()" style="background:var(--accent); color:white; border:none; padding:8px 16px; border-radius:8px; font-weight:600; width:100%;">Save Global Config</button>
@@ -636,6 +656,173 @@ Now here is my holiday list: [paste or describe your holiday list / attach the i
     this.render();
     let msg = `Imported ${expanded.length} holiday date(s) from ${data.holiday_list.length} entr${data.holiday_list.length === 1 ? 'y' : 'ies'}.`;
     if (skipped.length) msg += ` Skipped ${skipped.length} with bad dates: ${skipped.join(', ')}.`;
+    msg += ' Click "Save Global Config" to persist it.';
+    alert(msg);
+  }
+
+  openSyllabusImportModal() {
+    const modal = document.getElementById('syllabusImportModal');
+    if (modal) modal.style.display = 'flex';
+  }
+
+  closeSyllabusImportModal() {
+    const modal = document.getElementById('syllabusImportModal');
+    if (modal) modal.style.display = 'none';
+    const err = document.getElementById('syllabusImportError');
+    if (err) err.textContent = '';
+  }
+
+  _syllabusImportPromptText() {
+    return `Give me the syllabus for my subjects as a JSON object in EXACTLY this format (nothing else, no explanation, no markdown fences):
+
+{
+  "subjects": {
+    "Data Structure and Algorithms": {
+      "units": {
+        "Unit 1": {
+          "title": "Introduction",
+          "topics": ["Definition of Data Structures", "Types of Data Structures", "Asymptotic Notations"]
+        },
+        "Unit 2": {
+          "title": "Array and Linked List",
+          "topics": ["Array: Definition", "Singly Linked List", "Doubly Linked List"]
+        }
+      }
+    },
+    "Data Structure and Algorithms Lab": {
+      "practical_exercises": [
+        { "no": 1, "exercise": "Perform basic operations (traverse, insert, delete, update, search) on a single dimensional array." },
+        { "no": 2, "exercise": "Implement stack using array." }
+      ]
+    }
+  }
+}
+
+Rules for the AI generating it:
+- Top-level key is "subjects", an object keyed by subject name.
+- A THEORY subject has a "units" object keyed by "Unit 1", "Unit 2", etc, each with a "title" and a "topics" array (list of topic strings covered in that unit).
+- A LAB/PRACTICAL subject (name usually ends with "Lab") has a "practical_exercises" array instead of "units" — each item has "no" (exercise number) and "exercise" (description text). It does NOT have "units".
+- A subject must have EITHER "units" OR "practical_exercises", never both, never neither.
+- Read my uploaded syllabus PDF/notes and fill this in accurately for my actual subjects, units and topics (or lab exercises).
+- Output ONLY the JSON, nothing else.
+
+Now here is my syllabus: [paste or describe your syllabus / attach the PDF or image here]`;
+  }
+
+  async copySyllabusImportPrompt() {
+    const text = this._syllabusImportPromptText();
+    try {
+      await navigator.clipboard.writeText(text);
+      alert('Prompt copied! Paste it into any AI chat along with your syllabus PDF/notes to get accurate JSON.');
+    } catch (e) {
+      const ta = document.getElementById('syllabusImportInput');
+      if (ta) { ta.value = text; ta.select(); }
+      alert('Could not auto-copy. The prompt has been placed in the textarea below — select and copy it manually.');
+    }
+  }
+
+  showSyllabusImportExample() {
+    const example = {
+      subjects: {
+        "Software Engineering": {
+          units: {
+            "Unit 1": {
+              title: "Introduction",
+              topics: ["Software Engineering Definition", "Need for Software Engineering", "SDLC Models", "Waterfall Model", "Agile Software Development"]
+            },
+            "Unit 2": {
+              title: "Software Requirements Engineering",
+              topics: ["Functional Requirements", "Non-Functional Requirements", "Requirements Elicitation and Analysis", "COCOMO"]
+            }
+          }
+        },
+        "Data Structure and Algorithms Lab": {
+          practical_exercises: [
+            { no: 1, exercise: "Perform basic operations (traverse, insert, delete, update, search) on a single dimensional array." },
+            { no: 2, exercise: "Perform basic operations (traverse, insert, delete, update, search) on Linked List." },
+            { no: 3, exercise: "Implement stack using array." }
+          ]
+        }
+      }
+    };
+    const ta = document.getElementById('syllabusImportInput');
+    if (ta) ta.value = JSON.stringify(example, null, 2);
+  }
+
+  applySyllabusImportJson() {
+    const errEl = document.getElementById('syllabusImportError');
+    const input = document.getElementById('syllabusImportInput');
+    if (errEl) errEl.textContent = '';
+    let data;
+    try {
+      data = JSON.parse(input.value);
+    } catch (e) {
+      if (errEl) errEl.textContent = 'Invalid JSON: ' + e.message;
+      return;
+    }
+    if (!data || typeof data !== 'object' || !data.subjects || typeof data.subjects !== 'object') {
+      if (errEl) errEl.textContent = 'JSON must have a "subjects" object keyed by subject name.';
+      return;
+    }
+
+    const gc = window.globalConfig || {};
+    if (!Array.isArray(gc.syllabus)) gc.syllabus = [];
+
+    const subjectNames = Object.keys(data.subjects);
+    if (subjectNames.length === 0) {
+      if (errEl) errEl.textContent = 'No subjects found inside "subjects".';
+      return;
+    }
+
+    let addedCount = 0;
+    let updatedCount = 0;
+    const skipped = [];
+
+    subjectNames.forEach(name => {
+      const src = data.subjects[name];
+      if (!src || typeof src !== 'object') { skipped.push(name); return; }
+
+      let units = [];
+
+      if (src.units && typeof src.units === 'object' && !Array.isArray(src.units)) {
+        // Theory subject: units keyed "Unit 1" -> {title, topics: []}
+        units = Object.keys(src.units).map(unitKey => {
+          const u = src.units[unitKey] || {};
+          const topics = Array.isArray(u.topics) ? u.topics : [];
+          const desc = topics.map(t => `• ${t}`).join('\n');
+          return { title: u.title ? `${unitKey}: ${u.title}` : unitKey, desc };
+        });
+      } else if (Array.isArray(src.practical_exercises)) {
+        // Lab subject: flat exercise list -> treat each as a "unit"
+        units = src.practical_exercises.map(ex => ({
+          title: `Exercise ${ex.no != null ? ex.no : ''}`.trim(),
+          desc: ex.exercise || ''
+        }));
+      } else {
+        skipped.push(name);
+        return;
+      }
+
+      const existingIdx = gc.syllabus.findIndex(s => s.subject === name);
+      if (existingIdx >= 0) {
+        gc.syllabus[existingIdx].units = units;
+        updatedCount++;
+      } else {
+        gc.syllabus.push({ subject: name, units });
+        addedCount++;
+      }
+    });
+
+    if (addedCount === 0 && updatedCount === 0) {
+      if (errEl) errEl.textContent = 'No valid subjects to import (each needs "units" or "practical_exercises").';
+      return;
+    }
+
+    window.globalConfig = gc;
+    this.closeSyllabusImportModal();
+    this.render();
+    let msg = `Imported syllabus: ${addedCount} new subject(s) added, ${updatedCount} existing subject(s) updated.`;
+    if (skipped.length) msg += ` Skipped (invalid shape): ${skipped.join(', ')}.`;
     msg += ' Click "Save Global Config" to persist it.';
     alert(msg);
   }
