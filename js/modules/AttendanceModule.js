@@ -56,6 +56,7 @@ export class AttendanceModule {
     let total = 0, present = 0;
     const subTotals = {};
     const subPresent = {};
+    const dayTotals = {};   // dateKey -> { total, present }
     const { subjects: SUBJECTS } = window.globalConfig;
     if (SUBJECTS) {
         SUBJECTS.forEach(s => { subTotals[s] = 0; subPresent[s] = 0; });
@@ -63,18 +64,34 @@ export class AttendanceModule {
 
     for (const dateKey in data) {
       const day = data[dateKey];
+      let dTotal = 0, dPresent = 0;
       for (const pKey in day) {
         const sub = pKey.split('_')[0];
         if (SUBJECTS && !SUBJECTS.includes(sub)) continue;
         total++;
+        dTotal++;
         subTotals[sub] = (subTotals[sub] || 0) + 1;
         if (day[pKey] === 'P') {
           present++;
+          dPresent++;
           subPresent[sub] = (subPresent[sub] || 0) + 1;
         }
       }
+      if (dTotal > 0) dayTotals[dateKey] = { total: dTotal, present: dPresent };
     }
-    return { total, present, subTotals, subPresent };
+    return { total, present, subTotals, subPresent, dayTotals };
+  }
+
+  // Consecutive-day "full attendance" streak, counting back from the most recent marked day.
+  calcStreak(dayTotals) {
+    const sortedDates = Object.keys(dayTotals).sort().reverse();
+    let streak = 0;
+    for (const dateKey of sortedDates) {
+      const d = dayTotals[dateKey];
+      if (d.present === d.total && d.total > 0) streak++;
+      else break;
+    }
+    return streak;
   }
 
   render() {
@@ -82,8 +99,10 @@ export class AttendanceModule {
     if (!SUBJECTS) return;
 
     const data = this.attData || {};
-    const { total, present, subTotals, subPresent } = this.calcStats(data);
+    const { total, present, subTotals, subPresent, dayTotals } = this.calcStats(data);
+    const absent = total - present;
     const pct = total === 0 ? 0 : Math.round((present / total) * 100);
+    const streak = this.calcStreak(dayTotals);
 
     // Ring (Apple Activity rings style)
     const circumference = 377;
@@ -100,6 +119,9 @@ export class AttendanceModule {
       pctElem.style.color = pct >= 75 ? 'var(--green)' : pct >= 60 ? 'var(--yellow)' : 'var(--red)';
     }
 
+    const ringTarget = document.getElementById('ringTarget');
+    if (ringTarget) ringTarget.setAttribute('stroke', 'var(--muted)');
+
     // Summary
     const needed = total > 0 ? Math.max(0, Math.ceil(0.75 * total) - present) : 0;
     const canMiss = total > 0 ? Math.floor(present - 0.75 * total) : 0;
@@ -107,33 +129,75 @@ export class AttendanceModule {
     const summaryElem = document.getElementById('attSummary');
     if (summaryElem) {
       summaryElem.innerHTML = `
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
-          <div class="ios-card" style="text-align:center; padding:1rem;">
-            <div style="font-size:2rem; font-weight:700; color:var(--text);">${total}</div>
-            <div style="font-size:0.75rem; color:var(--muted); text-transform:uppercase;">Total</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:1rem;">
+          <div class="ios-card" style="text-align:center; padding:0.85rem;">
+            <div style="font-size:1.5rem; font-weight:700; color:var(--text);">${total}</div>
+            <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase;">Total</div>
           </div>
-          <div class="ios-card" style="text-align:center; padding:1rem;">
-            <div style="font-size:2rem; font-weight:700; color:var(--green);">${present}</div>
-            <div style="font-size:0.75rem; color:var(--muted); text-transform:uppercase;">Present</div>
+          <div class="ios-card" style="text-align:center; padding:0.85rem;">
+            <div style="font-size:1.5rem; font-weight:700; color:var(--green);">${present}</div>
+            <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase;">Present</div>
+          </div>
+          <div class="ios-card" style="text-align:center; padding:0.85rem;">
+            <div style="font-size:1.5rem; font-weight:700; color:var(--red);">${absent}</div>
+            <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase;">Absent</div>
+          </div>
+          <div class="ios-card" style="text-align:center; padding:0.85rem;">
+            <div style="font-size:1.5rem; font-weight:700; color:var(--accent);">${streak}</div>
+            <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase;">Streak</div>
           </div>
         </div>
         ${pct < 75 && total > 0 ? `<div class="ios-card" style="text-align:center; padding:0.75rem; margin-bottom:1rem;"><span style="color:var(--yellow); font-weight:600;">${needed}</span> more needed for 75%</div>` : ''}
-        ${pct >= 75 && canMiss > 0 ? `<div class="ios-card" style="text-align:center; padding:0.75rem; margin-bottom:1rem;"><span style="color:var(--green); font-weight:600;">${canMiss}</span> safe to miss 😅</div>` : ''}
+        ${pct >= 75 && canMiss > 0 ? `<div class="ios-card" style="text-align:center; padding:0.75rem; margin-bottom:1rem;"><span style="color:var(--green); font-weight:600;">${canMiss}</span> safe to miss overall 😅</div>` : ''}
       `;
     }
 
-    // Subject rows
+    // Weakest subject alert
+    const alertElem = document.getElementById('attAlert');
+    if (alertElem) {
+      let worst = null;
+      SUBJECTS.forEach(sub => {
+        const t = subTotals[sub] || 0;
+        if (t === 0) return;
+        const p = subPresent[sub] || 0;
+        const sp = (p / t) * 100;
+        if (sp < 75 && (worst === null || sp < worst.pct)) worst = { sub, pct: sp, t, p };
+      });
+      if (worst) {
+        const need = Math.max(0, Math.ceil(0.75 * worst.t) - worst.p);
+        alertElem.innerHTML = `<div class="ios-card" style="text-align:center; padding:0.75rem; margin-bottom:1rem;">
+          <span style="color:var(--yellow); font-weight:600;">${worst.sub}</span> is your weakest subject at ${Math.round(worst.pct)}% — attend <span style="color:var(--red); font-weight:600;">${need}</span> more in a row to clear 75%
+        </div>`;
+      } else {
+        alertElem.innerHTML = '';
+      }
+    }
+
+    // Subject rows — with present/total count and per-subject safe-to-miss / need-more
     const subHtml = SUBJECTS.map(sub => {
       const t = subTotals[sub] || 0;
       const p = subPresent[sub] || 0;
       const sp = t === 0 ? 0 : Math.round((p / t) * 100);
       const color = sp >= 75 ? 'var(--green)' : sp >= 60 ? 'var(--yellow)' : 'var(--red)';
-      return `<div class="ios-list-item" style="display:flex; align-items:center; gap:1rem;">
-        <div style="font-weight:600; width:50px;">${sub}</div>
-        <div style="flex:1; background:var(--border); height:6px; border-radius:10px; overflow:hidden;">
-          <div style="height:100%; width:${sp}%; background:${color}; border-radius:10px;"></div>
+      let subLine = '';
+      if (t > 0) {
+        if (sp >= 75) {
+          const miss = Math.floor(p - 0.75 * t);
+          subLine = miss > 0 ? `${miss} safe to miss` : `at the edge — don't miss more`;
+        } else {
+          const need = Math.max(0, Math.ceil(0.75 * t) - p);
+          subLine = `need ${need} more for 75%`;
+        }
+      }
+      return `<div class="ios-list-item" style="padding:0.6rem 1rem;">
+        <div style="display:flex; align-items:center; gap:1rem; margin-bottom:${t > 0 ? '3px' : '0'};">
+          <div style="font-weight:600; width:60px; font-size:0.85rem;">${sub}</div>
+          <div style="flex:1; background:var(--border); height:6px; border-radius:10px; overflow:hidden;">
+            <div style="height:100%; width:${sp}%; background:${color}; border-radius:10px;"></div>
+          </div>
+          <div style="font-family:var(--font-mono); font-size:0.75rem; color:${color}; min-width:70px; text-align:right;">${sp}% (${p}/${t})</div>
         </div>
-        <div style="font-family:var(--font-mono); font-size:0.8rem; color:${color}; min-width:40px; text-align:right;">${sp}%</div>
+        ${t > 0 ? `<div style="font-size:0.68rem; color:${sp >= 75 ? 'var(--green)' : 'var(--red)'}; margin-left:76px;">${subLine}</div>` : ''}
       </div>`;
     }).join('');
 
@@ -142,31 +206,78 @@ export class AttendanceModule {
       rowsElem.innerHTML = `<div class="ios-list">${subHtml}</div>`;
     }
 
+    // Last 7 marked days trend
+    this.renderTrend(dayTotals);
+
     // Log
     this.renderLog(data);
   }
 
+  renderTrend(dayTotals) {
+    const trendElem = document.getElementById('attTrend');
+    if (!trendElem) return;
+
+    const sortedDates = Object.keys(dayTotals).sort();
+    const last7 = sortedDates.slice(-7);
+
+    if (last7.length === 0) {
+      trendElem.innerHTML = '<div style="text-align:center; padding:1rem; color:var(--muted); font-size:0.8rem;">No records yet.</div>';
+      return;
+    }
+
+    const bars = last7.map(dateKey => {
+      const d = dayTotals[dateKey];
+      const pct = d.total === 0 ? 0 : Math.round((d.present / d.total) * 100);
+      const color = pct >= 75 ? 'var(--green)' : pct >= 60 ? 'var(--yellow)' : 'var(--red)';
+      const label = dateKey.slice(5).replace('-', '/');
+      return `<div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
+        <div style="font-size:0.6rem; color:var(--muted);">${pct}%</div>
+        <div style="width:100%; height:60px; display:flex; align-items:flex-end; background:var(--border); border-radius:4px; overflow:hidden;">
+          <div style="width:100%; height:${Math.max(pct, 4)}%; background:${color};"></div>
+        </div>
+        <div style="font-size:0.6rem; color:var(--muted);">${label}</div>
+      </div>`;
+    }).join('');
+
+    trendElem.innerHTML = `<div class="ios-card" style="padding:0.75rem; display:flex; gap:6px;">${bars}</div>`;
+  }
+
   renderLog(data) {
+    const { periods: PERIODS } = window.globalConfig || {};
+    const slotStart = {};
+    if (PERIODS) PERIODS.forEach(p => { slotStart[p.slot] = p.start; });
+
     const sortedDates = Object.keys(data).sort().reverse();
     const logHtml = sortedDates.map(dateKey => {
       const day = data[dateKey];
       const d = new Date(dateKey);
       const dayName = DAY_NAMES[d.getDay()];
-      const pBtns = Object.keys(day).map(pKey => {
+
+      const keys = Object.keys(day);
+      const dayPresent = keys.filter(k => day[k] === 'P').length;
+      const dayTotal = keys.length;
+      const dayPct = dayTotal === 0 ? 0 : Math.round((dayPresent / dayTotal) * 100);
+      const dayColor = dayPct >= 75 ? 'var(--green)' : dayPct >= 60 ? 'var(--yellow)' : 'var(--red)';
+
+      const pBtns = keys.map(pKey => {
         const parts = pKey.split('_');
         const sub = parts[0];
         const slot = parts[1];
         const status = day[pKey];
         const isPres = status === 'P';
+        const timeLabel = slotStart[slot] ? formatTime12(slotStart[slot]) : slot;
         return `<button onclick="window.togglePeriod('${dateKey}','${pKey}')"
           style="padding: 4px 10px; border-radius: 8px; border: 1px solid ${isPres ? 'var(--green)' : 'var(--red)'}; background: ${isPres ? 'rgba(48,209,88,0.1)' : 'rgba(255,69,58,0.1)'}; color: ${isPres ? 'var(--green)' : 'var(--red)'}; font-size: 0.75rem; font-weight: 600;">
-          ${sub} <span style="font-size:0.65rem; opacity:0.8">${slot}</span>
+          ${sub} <span style="font-size:0.65rem; opacity:0.8">${timeLabel}</span>
         </button>`;
       }).join('');
       return `<div class="ios-list-item">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
           <div style="font-size:0.85rem; font-weight:600; color:var(--muted);">${dateKey.slice(5)} • ${dayName}</div>
-          <button onclick="window.deleteAttendanceDay('${dateKey}')" style="background:var(--accent2); color:white; border:none; border-radius:4px; padding:2px 6px; font-size:0.7rem;">Delete</button>
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <span style="font-size:0.75rem; font-weight:600; color:${dayColor};">${dayPresent}/${dayTotal} • ${dayPct}%</span>
+            <button onclick="window.deleteAttendanceDay('${dateKey}')" style="background:var(--accent2); color:white; border:none; border-radius:4px; padding:2px 6px; font-size:0.7rem;">Delete</button>
+          </div>
         </div>
         <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">${pBtns}</div>
       </div>`;
