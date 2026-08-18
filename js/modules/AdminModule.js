@@ -133,7 +133,7 @@ export class AdminModule {
 
         <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);">
           <h4>Timetable</h4>
-          <p style="font-size:0.8rem; color:var(--muted); margin-bottom:0.5rem;">Pick a subject for each period, per day. Add periods above first.</p>
+          <p style="font-size:0.8rem; color:var(--muted); margin-bottom:0.5rem;">Pick a subject for each period, per day. Add periods above first — or import everything at once below.</p>
           <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;">
             ${DAY_NAMES.map((d, i) => offDays.includes(i) ? '' : `
               <button onclick="window.adminModule.selectTTDay(${i})" style="background:${i === this.ttDay ? 'var(--accent)' : 'var(--bg)'}; color:white; border:1px solid var(--border); padding:6px 10px; border-radius:6px; font-size:0.8rem;">${d}</button>
@@ -141,6 +141,24 @@ export class AdminModule {
           </div>
           <div id="ttDayEditor">
             ${offDays.includes(this.ttDay) ? `<p style="color:var(--muted); font-size:0.85rem;">This day is OFF.</p>` : this.renderTTDayEditor(gc)}
+          </div>
+          <button onclick="window.adminModule.openImportModal()" style="margin-top:0.75rem; background:var(--bg); border:1px solid var(--accent); color:var(--accent); padding:6px 12px; border-radius:6px; font-weight:600; font-size:0.85rem;">⇪ Import Timetable from JSON</button>
+        </div>
+
+        <div id="jsonImportModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center; padding:1rem;">
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:1.25rem; max-width:640px; width:100%; max-height:85vh; overflow-y:auto;">
+            <h3 style="margin-top:0;">Import Timetable JSON</h3>
+            <p style="font-size:0.8rem; color:var(--muted);">Paste a JSON in the format below. This will replace Subjects, Periods, Off Days and the whole Timetable. Use the "Copy AI Prompt" button to get a prompt you can give to any AI to generate this JSON for your own timetable/timetable image.</p>
+            <div style="display:flex; gap:0.5rem; margin:0.75rem 0;">
+              <button onclick="window.adminModule.copyImportPrompt()" style="flex:1; background:var(--bg); border:1px solid var(--border); color:white; padding:8px; border-radius:6px; font-weight:600;">📋 Copy AI Prompt</button>
+              <button onclick="window.adminModule.showImportExample()" style="flex:1; background:var(--bg); border:1px solid var(--border); color:white; padding:8px; border-radius:6px; font-weight:600;">Load Example</button>
+            </div>
+            <textarea id="jsonImportInput" placeholder='Paste JSON here...' style="width:100%; min-height:220px; background:var(--bg); color:white; border:1px solid var(--border); border-radius:6px; padding:8px; font-family:var(--font-mono,monospace); font-size:0.8rem;"></textarea>
+            <div id="jsonImportError" style="color:var(--accent2); font-size:0.8rem; margin-top:0.5rem;"></div>
+            <div style="display:flex; gap:0.5rem; margin-top:0.75rem;">
+              <button onclick="window.adminModule.closeImportModal()" style="flex:1; background:var(--bg); border:1px solid var(--border); color:white; padding:8px; border-radius:6px;">Cancel</button>
+              <button onclick="window.adminModule.applyImportJson()" style="flex:1; background:var(--accent); border:none; color:white; padding:8px; border-radius:6px; font-weight:700;">Apply</button>
+            </div>
           </div>
         </div>
 
@@ -242,6 +260,222 @@ export class AdminModule {
         </div>
       `;
     }).join('');
+  }
+
+  openImportModal() {
+    const modal = document.getElementById('jsonImportModal');
+    if (modal) modal.style.display = 'flex';
+  }
+
+  closeImportModal() {
+    const modal = document.getElementById('jsonImportModal');
+    if (modal) modal.style.display = 'none';
+    const err = document.getElementById('jsonImportError');
+    if (err) err.textContent = '';
+  }
+
+  _importPromptText() {
+    return `Give me my weekly college timetable as a JSON object in EXACTLY this format (nothing else, no explanation, no markdown fences):
+
+{
+  "section": "BCA-III Section-C",
+  "schedule": {
+    "Monday": "OFF",
+    "Tuesday": [
+      {"subject": "DSA", "teacher": "SRC", "start": "11:45 AM", "end": "12:30 PM"},
+      {"subject": "DM", "teacher": "PS", "start": "12:30 PM", "end": "1:15 PM"},
+      {"subject": "LUNCH", "teacher": null, "start": "2:00 PM", "end": "2:45 PM"}
+    ],
+    "Wednesday": [ ... same shape ... ],
+    "Thursday": "OFF",
+    "Friday": [ ... same shape ... ],
+    "Saturday": [ ... same shape ... ],
+    "Sunday": "OFF"
+  }
+}
+
+Rules for the AI generating it:
+- Use ALL 7 days as keys: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday.
+- A day with no classes must be the string "OFF" (not an empty array).
+- A day with classes must be an array of period objects in order, each with "subject", "teacher" (or null), "start" and "end" (12-hour time like "11:45 AM").
+- Every period across every working day must have the SAME set of start/end time slots in the SAME order (i.e. period 1 is always the same time range on every working day), so the periods line up as fixed daily slots. Use "LUNCH" as the subject with teacher null for the lunch break.
+- Look at my uploaded timetable image/text and fill this in accurately for my actual subjects, teachers and timings.
+- Output ONLY the JSON, nothing else.
+
+Now here is my timetable: [paste or describe your timetable / attach the image here]`;
+  }
+
+  async copyImportPrompt() {
+    const text = this._importPromptText();
+    try {
+      await navigator.clipboard.writeText(text);
+      alert('Prompt copied! Paste it into any AI chat along with your timetable (text or image) to get accurate JSON.');
+    } catch (e) {
+      // fallback for browsers without clipboard permission
+      const ta = document.getElementById('jsonImportInput');
+      if (ta) { ta.value = text; ta.select(); }
+      alert('Could not auto-copy. The prompt has been placed in the textarea below — select and copy it manually.');
+    }
+  }
+
+  showImportExample() {
+    const example = {
+      section: "BCA-III Section-C",
+      schedule: {
+        Monday: "OFF",
+        Tuesday: [
+          { subject: "DSA", teacher: "SRC", start: "11:45 AM", end: "12:30 PM" },
+          { subject: "DM", teacher: "PS", start: "12:30 PM", end: "1:15 PM" },
+          { subject: "SE", teacher: "MR.X", start: "1:15 PM", end: "2:00 PM" },
+          { subject: "LUNCH", teacher: null, start: "2:00 PM", end: "2:45 PM" },
+          { subject: "DSA LAB", teacher: null, start: "2:45 PM", end: "3:30 PM" },
+          { subject: "LIBRARY", teacher: null, start: "3:30 PM", end: "4:15 PM" },
+          { subject: "MIS", teacher: "Su.S", start: "4:15 PM", end: "5:00 PM" }
+        ],
+        Wednesday: [
+          { subject: "MIS", teacher: "Su.S", start: "11:45 AM", end: "12:30 PM" },
+          { subject: "DM", teacher: "PS", start: "12:30 PM", end: "1:15 PM" },
+          { subject: "LIBRARY", teacher: null, start: "1:15 PM", end: "2:00 PM" },
+          { subject: "LUNCH", teacher: null, start: "2:00 PM", end: "2:45 PM" },
+          { subject: "DSA LAB", teacher: null, start: "2:45 PM", end: "3:30 PM" },
+          { subject: "DSA", teacher: "SRC", start: "3:30 PM", end: "4:15 PM" },
+          { subject: "SE", teacher: "MR.X", start: "4:15 PM", end: "5:00 PM" }
+        ],
+        Thursday: "OFF",
+        Friday: [
+          { subject: "MIS", teacher: "Su.S", start: "11:45 AM", end: "12:30 PM" },
+          { subject: "DM", teacher: "PS", start: "12:30 PM", end: "1:15 PM" },
+          { subject: "DSA", teacher: "SRC", start: "1:15 PM", end: "2:00 PM" },
+          { subject: "LUNCH", teacher: null, start: "2:00 PM", end: "2:45 PM" },
+          { subject: "SE", teacher: "MR.X", start: "2:45 PM", end: "3:30 PM" },
+          { subject: "DSA LAB", teacher: null, start: "3:30 PM", end: "4:15 PM" },
+          { subject: "DSA LAB", teacher: null, start: "4:15 PM", end: "5:00 PM" }
+        ],
+        Saturday: [
+          { subject: "DM", teacher: "PS", start: "11:45 AM", end: "12:30 PM" },
+          { subject: "MIS", teacher: "Su.S", start: "12:30 PM", end: "1:15 PM" },
+          { subject: "DSA", teacher: "SRC", start: "1:15 PM", end: "2:00 PM" },
+          { subject: "LUNCH", teacher: null, start: "2:00 PM", end: "2:45 PM" },
+          { subject: "SE", teacher: "MR.X", start: "2:45 PM", end: "3:30 PM" },
+          { subject: "DSA LAB", teacher: null, start: "3:30 PM", end: "4:15 PM" },
+          { subject: "DSA LAB", teacher: null, start: "4:15 PM", end: "5:00 PM" }
+        ],
+        Sunday: "OFF"
+      }
+    };
+    const ta = document.getElementById('jsonImportInput');
+    if (ta) ta.value = JSON.stringify(example, null, 2);
+  }
+
+  _to24h(t) {
+    if (!t) return '';
+    const s = String(t).trim();
+    // already 24h "HH:MM"
+    if (/^\d{1,2}:\d{2}$/.test(s)) {
+      const [h, m] = s.split(':').map(Number);
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
+    const match = s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!match) return s;
+    let [, h, m, ap] = match;
+    h = Number(h);
+    ap = ap.toUpperCase();
+    if (ap === 'PM' && h !== 12) h += 12;
+    if (ap === 'AM' && h === 12) h = 0;
+    return `${String(h).padStart(2, '0')}:${m}`;
+  }
+
+  applyImportJson() {
+    const errEl = document.getElementById('jsonImportError');
+    const input = document.getElementById('jsonImportInput');
+    if (errEl) errEl.textContent = '';
+    let data;
+    try {
+      data = JSON.parse(input.value);
+    } catch (e) {
+      if (errEl) errEl.textContent = 'Invalid JSON: ' + e.message;
+      return;
+    }
+    if (!data || typeof data !== 'object' || !data.schedule) {
+      if (errEl) errEl.textContent = 'JSON must have a "schedule" object keyed by day name.';
+      return;
+    }
+
+    const DAY_NAME_TO_IDX = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
+    const schedule = data.schedule;
+
+    // 1. Collect the union of all time slots (by start-end) across working days, in first-seen order
+    const slotOrder = []; // [{start,end}]
+    const slotKey = (s, e) => `${s}|${e}`;
+    const slotIndex = new Map();
+
+    Object.keys(schedule).forEach(dayName => {
+      const entries = schedule[dayName];
+      if (!Array.isArray(entries)) return;
+      entries.forEach(cls => {
+        const start = this._to24h(cls.start);
+        const end = this._to24h(cls.end);
+        const key = slotKey(start, end);
+        if (!slotIndex.has(key)) {
+          slotIndex.set(key, slotOrder.length);
+          slotOrder.push({ start, end });
+        }
+      });
+    });
+
+    if (slotOrder.length === 0) {
+      if (errEl) errEl.textContent = 'No class entries found in any day — nothing to import.';
+      return;
+    }
+
+    // 2. Build periods array from slotOrder
+    const periods = slotOrder.map((s, i) => ({ label: String(i + 1), slot: String(i + 1), start: s.start, end: s.end }));
+
+    // 3. Build timetable[dayIdx] aligned to periods, and offDays, and subjects set
+    const timetable = {};
+    const offDays = [];
+    const subjectsSet = new Set();
+
+    Object.keys(schedule).forEach(dayName => {
+      const dayIdx = DAY_NAME_TO_IDX[dayName];
+      if (dayIdx === undefined) return; // unknown day name, skip
+      const entries = schedule[dayName];
+
+      if (entries === 'OFF' || !Array.isArray(entries) || entries.length === 0) {
+        offDays.push(dayIdx);
+        return;
+      }
+
+      const dayArr = new Array(periods.length).fill(null).map(() => ({ sub: '', teacher: '' }));
+      entries.forEach(cls => {
+        const start = this._to24h(cls.start);
+        const end = this._to24h(cls.end);
+        const idx = slotIndex.get(slotKey(start, end));
+        if (idx === undefined) return;
+        dayArr[idx] = { sub: cls.subject || '', teacher: cls.teacher || '' };
+        if (cls.subject && cls.subject !== 'LUNCH') subjectsSet.add(cls.subject);
+      });
+      timetable[dayIdx] = dayArr;
+    });
+
+    // 4. Apply to global config
+    const gc = window.globalConfig || {};
+    if (data.section) gc.sectionName = data.section;
+    gc.periods = periods;
+    gc.timetable = timetable;
+    gc.offDays = [...new Set(offDays)];
+    const existingSubjects = new Set(gc.subjects || []);
+    subjectsSet.forEach(s => existingSubjects.add(s));
+    gc.subjects = [...existingSubjects];
+    window.globalConfig = gc;
+
+    // jump the timetable editor to the first working day
+    const firstWorking = [1, 2, 3, 4, 5, 6, 0].find(d => !gc.offDays.includes(d));
+    if (firstWorking !== undefined) this.ttDay = firstWorking;
+
+    this.closeImportModal();
+    this.render();
+    alert('Timetable imported! Review it below, then click "Save Global Config" to persist it.');
   }
 
   toggleOffDay(dayIdx, checked) {
