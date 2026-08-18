@@ -93,9 +93,29 @@ export class AdminModule {
 
         <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);">
           <h4>Holidays</h4>
-          <button onclick="window.adminModule.addHoliday()" style="background:var(--surface); border:1px solid var(--border); color:white; padding:4px 8px; border-radius:4px; margin-bottom: 0.5rem;">+ Add Holiday</button>
+          <div style="display:flex; gap:0.5rem; margin-bottom: 0.5rem;">
+            <button onclick="window.adminModule.addHoliday()" style="background:var(--surface); border:1px solid var(--border); color:white; padding:4px 8px; border-radius:4px;">+ Add Holiday</button>
+            <button onclick="window.adminModule.openHolidayImportModal()" style="background:var(--bg); border:1px solid var(--accent); color:var(--accent); padding:4px 8px; border-radius:4px; font-weight:600;">⇪ Import from JSON</button>
+          </div>
           <div id="holidaysList" style="margin-top:0.5rem;">
             ${holidaysHtml}
+          </div>
+        </div>
+
+        <div id="holidayImportModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center; padding:1rem;">
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:1.25rem; max-width:640px; width:100%; max-height:85vh; overflow-y:auto;">
+            <h3 style="margin-top:0;">Import Holidays JSON</h3>
+            <p style="font-size:0.8rem; color:var(--muted);">Paste a JSON holiday list in the format below. Ranges (e.g. a 3-day festival) are expanded into one entry per date automatically. This <b>replaces</b> the current holiday list. Use "Copy AI Prompt" to get a prompt for generating this from your college's official holiday circular/PDF/image.</p>
+            <div style="display:flex; gap:0.5rem; margin:0.75rem 0;">
+              <button onclick="window.adminModule.copyHolidayImportPrompt()" style="flex:1; background:var(--bg); border:1px solid var(--border); color:white; padding:8px; border-radius:6px; font-weight:600;">📋 Copy AI Prompt</button>
+              <button onclick="window.adminModule.showHolidayImportExample()" style="flex:1; background:var(--bg); border:1px solid var(--border); color:white; padding:8px; border-radius:6px; font-weight:600;">Load Example</button>
+            </div>
+            <textarea id="holidayImportInput" placeholder='Paste JSON here...' style="width:100%; min-height:220px; background:var(--bg); color:white; border:1px solid var(--border); border-radius:6px; padding:8px; font-family:var(--font-mono,monospace); font-size:0.8rem;"></textarea>
+            <div id="holidayImportError" style="color:var(--accent2); font-size:0.8rem; margin-top:0.5rem;"></div>
+            <div style="display:flex; gap:0.5rem; margin-top:0.75rem;">
+              <button onclick="window.adminModule.closeHolidayImportModal()" style="flex:1; background:var(--bg); border:1px solid var(--border); color:white; padding:8px; border-radius:6px;">Cancel</button>
+              <button onclick="window.adminModule.applyHolidayImportJson()" style="flex:1; background:var(--accent); border:none; color:white; padding:8px; border-radius:6px; font-weight:700;">Apply</button>
+            </div>
           </div>
         </div>
 
@@ -476,6 +496,148 @@ Now here is my timetable: [paste or describe your timetable / attach the image h
     this.closeImportModal();
     this.render();
     alert('Timetable imported! Review it below, then click "Save Global Config" to persist it.');
+  }
+
+  openHolidayImportModal() {
+    const modal = document.getElementById('holidayImportModal');
+    if (modal) modal.style.display = 'flex';
+  }
+
+  closeHolidayImportModal() {
+    const modal = document.getElementById('holidayImportModal');
+    if (modal) modal.style.display = 'none';
+    const err = document.getElementById('holidayImportError');
+    if (err) err.textContent = '';
+  }
+
+  _holidayImportPromptText() {
+    return `Give me my official college holiday list as a JSON object in EXACTLY this format (nothing else, no explanation, no markdown fences):
+
+{
+  "institution": "School of Management Sciences, Varanasi",
+  "holiday_list": [
+    {
+      "name": "Makar Sankranti",
+      "start_date": "15.01.2026",
+      "end_date": "15.01.2026",
+      "days": ["Thursday"],
+      "no_of_days": 1
+    },
+    {
+      "name": "Holi",
+      "start_date": "02.03.2026",
+      "end_date": "04.03.2026",
+      "days": ["Monday", "Tuesday", "Wednesday"],
+      "no_of_days": 3
+    }
+  ],
+  "total_holidays": 29,
+  "note": "* Subject to the visibility of Moon"
+}
+
+Rules for the AI generating it:
+- "start_date" and "end_date" must be in DD.MM.YYYY format.
+- For a single-day holiday, start_date and end_date are the same, "days" has one weekday, "no_of_days" is 1.
+- For a multi-day holiday/festival (e.g. Holi, Durga Pooja, Deepawali), list every calendar day from start_date to end_date, its "days" array must have one weekday name per date in order, and "no_of_days" must match the count.
+- "total_holidays" is the sum of "no_of_days" across the whole list.
+- Read my uploaded holiday list/circular/image/PDF and fill this in accurately with the real holiday names and dates for my institution and year.
+- Output ONLY the JSON, nothing else.
+
+Now here is my holiday list: [paste or describe your holiday list / attach the image or PDF here]`;
+  }
+
+  async copyHolidayImportPrompt() {
+    const text = this._holidayImportPromptText();
+    try {
+      await navigator.clipboard.writeText(text);
+      alert('Prompt copied! Paste it into any AI chat along with your holiday circular/list (text, image or PDF) to get accurate JSON.');
+    } catch (e) {
+      const ta = document.getElementById('holidayImportInput');
+      if (ta) { ta.value = text; ta.select(); }
+      alert('Could not auto-copy. The prompt has been placed in the textarea below — select and copy it manually.');
+    }
+  }
+
+  showHolidayImportExample() {
+    const example = {
+      institution: "School of Management Sciences, Varanasi",
+      holiday_list: [
+        { name: "Makar Sankranti", start_date: "15.01.2026", end_date: "15.01.2026", days: ["Thursday"], no_of_days: 1 },
+        { name: "Republic Day", start_date: "26.01.2026", end_date: "26.01.2026", days: ["Monday"], no_of_days: 1 },
+        { name: "Holi", start_date: "02.03.2026", end_date: "04.03.2026", days: ["Monday", "Tuesday", "Wednesday"], no_of_days: 3 },
+        { name: "Deepawali", start_date: "07.11.2026", end_date: "09.11.2026", days: ["Saturday", "Sunday", "Monday"], no_of_days: 3 }
+      ],
+      total_holidays: 8,
+      note: "* Subject to the visibility of Moon"
+    };
+    const ta = document.getElementById('holidayImportInput');
+    if (ta) ta.value = JSON.stringify(example, null, 2);
+  }
+
+  _ddmmyyyyToIso(s) {
+    const m = String(s).trim().match(/^(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{4})$/);
+    if (!m) return null;
+    const [, d, mo, y] = m;
+    return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  }
+
+  _expandDateRange(startIso, endIso) {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const out = [];
+    let cur = new Date(startIso + 'T00:00:00');
+    const end = new Date(endIso + 'T00:00:00');
+    if (isNaN(cur) || isNaN(end)) return out;
+    while (cur <= end) {
+      const iso = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}-${String(cur.getDate()).padStart(2, '0')}`;
+      out.push({ date: iso, day: days[cur.getDay()] });
+      cur.setDate(cur.getDate() + 1);
+    }
+    return out;
+  }
+
+  applyHolidayImportJson() {
+    const errEl = document.getElementById('holidayImportError');
+    const input = document.getElementById('holidayImportInput');
+    if (errEl) errEl.textContent = '';
+    let data;
+    try {
+      data = JSON.parse(input.value);
+    } catch (e) {
+      if (errEl) errEl.textContent = 'Invalid JSON: ' + e.message;
+      return;
+    }
+    if (!data || !Array.isArray(data.holiday_list)) {
+      if (errEl) errEl.textContent = 'JSON must have a "holiday_list" array.';
+      return;
+    }
+
+    const expanded = [];
+    const skipped = [];
+    data.holiday_list.forEach(h => {
+      const startIso = this._ddmmyyyyToIso(h.start_date);
+      const endIso = this._ddmmyyyyToIso(h.end_date || h.start_date);
+      if (!startIso || !endIso) { skipped.push(h.name || '(unnamed)'); return; }
+      const dates = this._expandDateRange(startIso, endIso);
+      dates.forEach(d => expanded.push({ name: h.name || 'Holiday', date: d.date, day: d.day }));
+    });
+
+    if (expanded.length === 0) {
+      if (errEl) errEl.textContent = 'No valid holiday entries found (check date format DD.MM.YYYY).';
+      return;
+    }
+
+    expanded.sort((a, b) => a.date.localeCompare(b.date));
+
+    const gc = window.globalConfig || {};
+    gc.holidays = expanded;
+    window.globalConfig = gc;
+
+    this.closeHolidayImportModal();
+    this.render();
+    let msg = `Imported ${expanded.length} holiday date(s) from ${data.holiday_list.length} entr${data.holiday_list.length === 1 ? 'y' : 'ies'}.`;
+    if (skipped.length) msg += ` Skipped ${skipped.length} with bad dates: ${skipped.join(', ')}.`;
+    msg += ' Click "Save Global Config" to persist it.';
+    alert(msg);
   }
 
   toggleOffDay(dayIdx, checked) {
