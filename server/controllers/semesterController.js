@@ -21,7 +21,21 @@ const getSemesterHistory = async (req, res) => {
             const allAttendance = await Attendance.find({ userId: req.user._id });
 
             history = history.map(sem => {
-                const semAttendance = allAttendance.filter(a => a.semesterId && a.semesterId.toString() === sem._id.toString());
+                // Fallback: if semesterId is not present, match by date range if possible
+                // but currently we just assume older records might have missing semesterId or missing subjects.
+                // We'll filter based on semesterId first.
+                let semAttendance = allAttendance.filter(a => a.semesterId && a.semesterId.toString() === sem._id.toString());
+
+                // If semAttendance is empty, try fallback by date if a.semesterId is null
+                if (semAttendance.length === 0) {
+                    semAttendance = allAttendance.filter(a => {
+                        if (a.semesterId) return false;
+                        const recordDate = new Date(a.date);
+                        const startDate = new Date(sem.startDate);
+                        const endDate = new Date(sem.endedAt);
+                        return recordDate >= startDate && recordDate <= endDate;
+                    });
+                }
 
                 let totalPeriods = 0;
                 let presentPeriods = 0;
@@ -29,7 +43,8 @@ const getSemesterHistory = async (req, res) => {
                 semAttendance.forEach(record => {
                     record.records.forEach(r => {
                         // Only count subjects that were part of this semester's snapshot
-                        if (sem.subjects && sem.subjects.includes(r.subject)) {
+                        // Or if subjects snapshot is missing (older data), count all
+                        if (!sem.subjects || sem.subjects.length === 0 || sem.subjects.includes(r.subject)) {
                             totalPeriods++;
                             if (r.status === 'present') {
                                 presentPeriods++;
