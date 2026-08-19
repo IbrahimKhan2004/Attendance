@@ -55,7 +55,8 @@ export class ProfileModule {
             if (history.length > 0) {
                 html += `<h3 style="margin-bottom: 0.75rem;">Past Semesters</h3>`;
                 history.forEach((sem, idx) => {
-                    const endedDate = new Date(sem.endedAt).toLocaleDateString();
+                    const endedAtDate = new Date(sem.endedAt);
+                    const endedDate = `${endedAtDate.getFullYear()}-${String(endedAtDate.getMonth() + 1).padStart(2, '0')}-${String(endedAtDate.getDate()).padStart(2, '0')}`;
                     html += `
                         <div class="ios-card" style="padding: 1.5rem; margin-bottom: 1rem;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
