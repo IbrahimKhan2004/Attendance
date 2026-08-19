@@ -46,7 +46,7 @@ export class ProfileModule {
                     <div class="ios-card" style="padding: 1.5rem; margin-bottom: 1.5rem; border-left: 4px solid var(--accent);">
                         <div style="font-weight: 700; font-size: 1.2rem; margin-bottom: 4px;">${activeSemester.sectionName}</div>
                         <div style="color: var(--muted); font-size: 0.8rem; margin-bottom: 1rem;">Started: ${activeSemester.startDate}</div>
-                        <button onclick="window.showPage('attendance')" style="background: var(--surface); border: 1px solid var(--border); color: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; width: 100%;">View Live Attendance</button>
+                        <button onclick="window.pageManager.showPage('attendance')" style="background: var(--surface); border: 1px solid var(--border); color: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; width: 100%;">View Live Attendance</button>
                     </div>
                 `;
             }
