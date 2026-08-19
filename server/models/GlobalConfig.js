@@ -10,10 +10,6 @@ const globalConfigSchema = new mongoose.Schema({
     sectionName: { type: String, default: 'BCA-II Section C' },
     year: { type: String, default: '2026' },
 
-    // Semester timeline
-    semesterStart: { type: String, default: '2026-01-01' },
-    semesterEnd: { type: String, default: '2026-06-30' },
-
     // Off days (e.g. [1] for Monday OFF)
     offDays: { type: [Number], default: [1] },
 

@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const attendanceSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    semesterId: { type: mongoose.Schema.Types.ObjectId, ref: 'Semester', default: null },
     date: { type: String, required: true }, // Format YYYY-MM-DD
     records: [{
         subject: { type: String, required: true },

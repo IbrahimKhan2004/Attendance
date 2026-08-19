@@ -1,18 +1,26 @@
 const Attendance = require('../models/Attendance');
 const User = require('../models/User');
+const Semester = require('../models/Semester');
 
 const markAttendance = async (req, res) => {
     const { date, records } = req.body;
 
     try {
+        const activeSemester = await Semester.findOne({ status: 'active' });
+        if (!activeSemester) {
+            return res.status(400).json({ message: 'No active semester to mark attendance for.' });
+        }
+
         let attendance = await Attendance.findOne({ userId: req.user._id, date });
 
         if (attendance) {
             attendance.records = records;
+            attendance.semesterId = activeSemester._id;
             await attendance.save();
         } else {
             attendance = await Attendance.create({
                 userId: req.user._id,
+                semesterId: activeSemester._id,
                 date,
                 records
             });
@@ -26,7 +34,16 @@ const markAttendance = async (req, res) => {
 
 const getMyAttendance = async (req, res) => {
     try {
-        const attendance = await Attendance.find({ userId: req.user._id }).sort({ date: -1 });
+        const activeSemester = await Semester.findOne({ status: 'active' });
+        if (!activeSemester) {
+            return res.json([]);
+        }
+
+        const attendance = await Attendance.find({
+            userId: req.user._id,
+            semesterId: activeSemester._id
+        }).sort({ date: -1 });
+
         res.json(attendance);
     } catch (error) {
         res.status(500).json({ message: 'Server error' });
