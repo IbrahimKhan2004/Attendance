@@ -1119,7 +1119,7 @@ Now here is my syllabus: [paste or describe your syllabus / attach the PDF or im
       });
 
       if (res.ok) {
-        window.showToast('Semester started!');
+        alert('Semester started!');
         this.renderSemesterControl();
       } else {
         const data = await res.json();
@@ -1139,7 +1139,7 @@ Now here is my syllabus: [paste or describe your syllabus / attach the PDF or im
       });
 
       if (res.ok) {
-        window.showToast('Semester ended successfully.');
+        alert('Semester ended successfully.');
         this.renderSemesterControl();
       } else {
         const data = await res.json();
