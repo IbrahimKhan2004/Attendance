@@ -13,6 +13,7 @@ export class AdminModule {
   async onShow() {
     await this.fetchData();
     this.render();
+    this.renderSemesterControl();
   }
 
   async fetchData() {
@@ -67,8 +68,13 @@ export class AdminModule {
       <div style="margin-top: 1rem;">
         <h3>Configuration</h3>
 
+        <div id="semesterControlWrap" style="margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);">
+          <h4>Semester Control</h4>
+          <div id="semesterStatusArea" style="margin-top: 0.5rem;">Loading semester status...</div>
+        </div>
+
         <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);">
-          <h4>Semester Info</h4>
+          <h4>College & Section Info</h4>
           <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom: 0.5rem;">
             <input type="text" id="confCollege" value="${gc.collegeName || ''}" placeholder="College Name" style="flex:1; padding: 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: white;">
             <input type="text" id="confLocation" value="${gc.location || ''}" placeholder="Location" style="flex:1; padding: 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: white;">
@@ -1061,6 +1067,87 @@ Now here is my syllabus: [paste or describe your syllabus / attach the PDF or im
       } catch (e) {
           alert('Error adding student.');
       }
+  }
+
+  async renderSemesterControl() {
+    const area = document.getElementById('semesterStatusArea');
+    if (!area) return;
+
+    try {
+      const res = await fetchWithAuth('/semester/active');
+      if (res.ok) {
+        const activeSemester = await res.json();
+
+        if (activeSemester && activeSemester.status === 'active') {
+          area.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg); padding:1rem; border-radius:8px; border:1px solid var(--border);">
+              <div>
+                <div style="font-weight:600; font-size:1.1rem;">${activeSemester.sectionName}</div>
+                <div style="font-size:0.8rem; color:var(--muted); margin-top:4px;">Started: ${activeSemester.startDate}</div>
+              </div>
+              <button onclick="window.adminModule.endSemester()" style="background:var(--accent2); color:white; border:none; padding:8px 16px; border-radius:8px; font-weight:600;">End Semester</button>
+            </div>
+          `;
+        } else {
+          // No active semester -> Show Start Form
+          const today = new Date().toISOString().split('T')[0];
+          area.innerHTML = `
+            <div style="background:var(--bg); padding:1rem; border-radius:8px; border:1px solid var(--border);">
+              <div style="font-size:0.9rem; color:var(--muted); margin-bottom:0.5rem;">No active semester. Start a new one to enable attendance tracking.</div>
+              <div style="display:flex; gap:0.5rem; align-items:center;">
+                <input type="date" id="newSemesterStart" value="${today}" style="flex:1; padding:8px; border-radius:4px; border:1px solid var(--border); background:var(--surface); color:white; color-scheme: dark;">
+                <button onclick="window.adminModule.startSemester()" style="background:var(--accent); color:white; border:none; padding:8px 16px; border-radius:8px; font-weight:600;">Start Semester</button>
+              </div>
+            </div>
+          `;
+        }
+      }
+    } catch (e) {
+      area.innerHTML = `<div style="color:var(--accent2);">Error loading semester status</div>`;
+    }
+  }
+
+  async startSemester() {
+    const startDate = document.getElementById('newSemesterStart').value;
+    if (!startDate) return alert('Start date is required');
+
+    try {
+      const res = await fetchWithAuth('/semester/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ startDate })
+      });
+
+      if (res.ok) {
+        window.showToast('Semester started!');
+        this.renderSemesterControl();
+      } else {
+        const data = await res.json();
+        alert(data.message || 'Failed to start semester');
+      }
+    } catch (e) {
+      alert('Error starting semester');
+    }
+  }
+
+  async endSemester() {
+    if (!confirm('Are you sure you want to END the current semester? This will lock it for students.')) return;
+
+    try {
+      const res = await fetchWithAuth('/semester/end', {
+        method: 'POST'
+      });
+
+      if (res.ok) {
+        window.showToast('Semester ended successfully.');
+        this.renderSemesterControl();
+      } else {
+        const data = await res.json();
+        alert(data.message || 'Failed to end semester');
+      }
+    } catch (e) {
+      alert('Error ending semester');
+    }
   }
 
   async deleteStudent(id) {

@@ -28,10 +28,12 @@ app.get('/', (req, res) => {
 const authRoutes = require('./routes/authRoutes');
 const configRoutes = require('./routes/configRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
+const semesterRoutes = require('./routes/semesterRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/attendance', attendanceRoutes);
+app.use('/api/semester', semesterRoutes);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI).then(async () => {
