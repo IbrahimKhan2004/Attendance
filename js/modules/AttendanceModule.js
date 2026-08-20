@@ -401,15 +401,18 @@ export class AttendanceModule {
     let html = overrideDay !== null ? offDayHtml : '';
 
     html += '<div class="ios-list">';
+    let subjIdx = 0;
     html += PERIODS.map((p, i) => {
       const sub = tt[i].sub;
       if (sub === 'LUNCH' || sub === 'LIBRARY') return '';
       const key = `${p.slot}`;
+      const recordKey = `S${subjIdx}`;
+      subjIdx++;
 
       let currentSub = sub;
       let val = 'P';
       for (const k in existingData) {
-        if (k.endsWith('_' + p.slot)) {
+        if (k.endsWith('_' + recordKey)) {
           currentSub = k.split('_')[0];
           val = existingData[k];
           break;
