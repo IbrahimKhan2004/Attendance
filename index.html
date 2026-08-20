@@ -12,11 +12,21 @@
 
 <!-- LOGIN VIEW -->
 <div id="loginView" style="display:none; flex-direction:column; align-items:center; justify-content:center; height:100vh; padding:1rem;">
-  <div class="ios-card" style="width:100%; max-width:400px; padding:2rem;">
-    <h2 style="font-size:1.5rem; font-weight:700; margin-bottom:1.5rem; text-align:center;">Sign In</h2>
-    <input type="text" id="loginUsername" placeholder="Username" style="width:100%; padding:12px; background:var(--surface); border:1px solid var(--border); border-radius:8px; color:white; margin-bottom:1rem;">
-    <input type="password" id="loginPassword" placeholder="Password" style="width:100%; padding:12px; background:var(--surface); border:1px solid var(--border); border-radius:8px; color:white; margin-bottom:1.5rem;">
-    <button onclick="window.handleLogin()" style="width:100%; padding:12px; background:var(--accent); border:none; color:white; border-radius:10px; font-weight:600; font-size:1rem;">Login</button>
+  <div class="ios-card" style="width:100%; max-width:360px; padding:2rem;">
+    <div style="width:52px; height:52px; border-radius:14px; background:var(--bg); display:flex; align-items:center; justify-content:center; margin:0 auto 1rem;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5-10-5Z"/><path d="M6 12v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/></svg>
+    </div>
+    <h2 style="font-size:1.3rem; font-weight:700; text-align:center; margin-bottom:4px;">Welcome back</h2>
+    <div style="text-align:center; color:var(--muted); font-size:0.85rem; margin-bottom:1.5rem;">Sign in to track your attendance</div>
+    <div style="position:relative; margin-bottom:0.85rem;">
+      <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:1rem;">👤</span>
+      <input type="text" id="loginUsername" placeholder="Username" style="width:100%; padding:12px 12px 12px 38px; background:var(--bg); border:1px solid var(--border); border-radius:10px; color:white;">
+    </div>
+    <div style="position:relative; margin-bottom:1.5rem;">
+      <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:1rem;">🔒</span>
+      <input type="password" id="loginPassword" placeholder="Password" style="width:100%; padding:12px 12px 12px 38px; background:var(--bg); border:1px solid var(--border); border-radius:10px; color:white;">
+    </div>
+    <button onclick="window.handleLogin()" style="width:100%; padding:13px; background:var(--accent); border:none; color:white; border-radius:10px; font-weight:600; font-size:1rem;">Sign in</button>
     <div id="loginError" style="color:var(--accent2); margin-top:1rem; text-align:center; font-size:0.9rem; display:none;"></div>
   </div>
 </div>
