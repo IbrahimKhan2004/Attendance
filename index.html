@@ -138,20 +138,23 @@
 </div>
 
 <!-- SEMESTER ENDED OVERLAY -->
-<div id="semesterEndedOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:1000; flex-direction:column; align-items:center; justify-content:center; padding:2rem;">
+<div id="semesterEndedOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:1000; flex-direction:column; align-items:center; justify-content:center; padding:2rem; overflow-y:auto;">
   <div class="ios-card" style="width:100%; max-width:400px; text-align:center; padding:2.5rem 2rem;">
     <div style="font-size:3rem; margin-bottom:1rem;">🎓</div>
-    <h2 style="font-size:1.8rem; font-weight:700; margin-bottom:1rem;">Semester Ended</h2>
-    <p id="semesterEndedMsg" style="color:var(--muted); font-size:1rem; margin-bottom:2rem; line-height:1.5;">This semester has officially concluded. See you in the next one!</p>
+    <h2 style="font-size:1.8rem; font-weight:700; margin-bottom:0.5rem;">Semester Ended</h2>
+    <p id="semesterEndedMsg" style="color:var(--muted); font-size:1rem; margin-bottom:0.25rem; line-height:1.5;">This semester has officially concluded. See you in the next one!</p>
+    <p id="semesterEndedDates" style="color:var(--muted); font-size:0.8rem; margin-bottom:1.5rem;"></p>
 
-    <div style="background:var(--bg); border-radius:12px; padding:1.5rem; margin-bottom:2rem; border:1px solid var(--border);">
+    <div style="background:var(--bg); border-radius:12px; padding:1.5rem; margin-bottom:1.5rem; border:1px solid var(--border);">
       <div style="font-size:0.9rem; color:var(--muted); margin-bottom:0.5rem;">Final Attendance</div>
       <div id="semesterEndedStats" style="font-size:2.5rem; font-weight:700; color:var(--accent);">--%</div>
     </div>
 
-    <button onclick="window.goToProfile(); document.getElementById('semesterEndedOverlay').style.display='none';" style="width:100%; padding:14px; background:var(--surface); border:1px solid var(--border); color:white; border-radius:12px; font-weight:600; font-size:1rem; margin-bottom:1rem;">View in Profile</button>
+    <div style="text-align:left; font-weight:600; font-size:0.95rem; margin-bottom:0.75rem;">Your Attendance Log</div>
+    <div id="semesterEndedLog" style="text-align:left;"></div>
   </div>
 </div>
+
 
 <!-- Add Attendance Modal -->
 <div id="modalOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(5px); z-index:100; align-items:center; justify-content:center; padding:1rem;">
