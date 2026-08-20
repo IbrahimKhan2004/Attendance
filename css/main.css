@@ -185,3 +185,138 @@ body {
 .ios-list-item:last-child {
   border-bottom: none;
 }
+
+/* Holidays calendar */
+.holcal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.25rem 1rem;
+}
+.holcal-title {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--text);
+}
+.holcal-nav {
+  color: var(--accent);
+  font-size: 1.4rem;
+  padding: 0.25rem 0.75rem;
+  cursor: pointer;
+  user-select: none;
+}
+.holcal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.holcal-weekdays {
+  margin-bottom: 4px;
+}
+.holcal-weekday {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+.holcal-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--surface);
+  color: var(--text);
+}
+.holcal-empty {
+  cursor: default;
+  background: transparent;
+}
+.holcal-green {
+  color: var(--green);
+  background: rgba(48, 209, 88, 0.15);
+}
+.holcal-red {
+  color: var(--red);
+  background: rgba(255, 69, 58, 0.18);
+}
+.holcal-holiday {
+  color: var(--yellow);
+  background: rgba(255, 214, 10, 0.15);
+  border: 1.5px solid var(--yellow);
+}
+.holcal-today {
+  box-shadow: 0 0 0 1.5px var(--accent) inset;
+}
+.holcal-legend {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+.holcal-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+.holcal-dot-holiday { background: var(--yellow); }
+.holcal-dot-green { background: var(--green); }
+.holcal-dot-red { background: var(--red); }
+
+.holcal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+.holcal-modal {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  width: 100%;
+  max-width: 300px;
+  text-align: center;
+}
+.holcal-modal-title {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.holcal-modal-date {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+.holcal-popup-badge {
+  border-radius: var(--radius-sm);
+  padding: 0.6rem;
+  margin-bottom: 0.75rem;
+  font-weight: 700;
+}
+.holcal-popup-badge-holiday {
+  background: rgba(255, 214, 10, 0.12);
+  color: var(--yellow);
+}
+.holcal-popup-badge-green {
+  background: rgba(48, 209, 88, 0.12);
+  color: var(--green);
+}
+.holcal-popup-badge-red {
+  background: rgba(255, 69, 58, 0.12);
+  color: var(--red);
+}
+.holcal-popup-note {
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
