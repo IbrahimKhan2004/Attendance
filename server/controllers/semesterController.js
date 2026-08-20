@@ -39,12 +39,29 @@ const getSemesterHistory = async (req, res) => {
 
                 let totalPeriods = 0;
                 let presentPeriods = 0;
+                let matchedByFilter = 0;
 
                 semAttendance.forEach(record => {
                     record.records.forEach(r => {
                         // Only count subjects that were part of this semester's snapshot
                         // Or if subjects snapshot is missing (older data), count all
-                        if (!sem.subjects || sem.subjects.length === 0 || sem.subjects.includes(r.subject)) {
+                        const subjectMatches = !sem.subjects || sem.subjects.length === 0 ||
+                            sem.subjects.some(s => s.trim().toLowerCase() === (r.subject || '').trim().toLowerCase());
+                        if (subjectMatches) {
+                            matchedByFilter++;
+                        }
+                    });
+                });
+
+                // If the subjects snapshot doesn't match any record (e.g. subjects were renamed
+                // after the semester ended), fall back to counting all records instead of showing '--'
+                const useSubjectFilter = matchedByFilter > 0;
+
+                semAttendance.forEach(record => {
+                    record.records.forEach(r => {
+                        const subjectMatches = !useSubjectFilter || !sem.subjects || sem.subjects.length === 0 ||
+                            sem.subjects.some(s => s.trim().toLowerCase() === (r.subject || '').trim().toLowerCase());
+                        if (subjectMatches) {
                             totalPeriods++;
                             if (r.status === 'present') {
                                 presentPeriods++;
