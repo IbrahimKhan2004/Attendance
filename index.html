@@ -150,10 +150,23 @@
       <div id="semesterEndedStats" style="font-size:2.5rem; font-weight:700; color:var(--accent);">--%</div>
     </div>
 
-    <div style="text-align:left; font-weight:600; font-size:0.95rem; margin-bottom:0.75rem;">Your Attendance Log</div>
-    <div id="semesterEndedLog" style="text-align:left;"></div>
+    <div style="animation: heartfeltFadeIn 1.2s ease-out 0.3s both;">
+      <div style="font-size:1.8rem; margin-bottom:0.5rem; animation: heartfeltFloat 2.5s ease-in-out infinite;">✨</div>
+      <p style="color:var(--text); font-size:0.95rem; line-height:1.6; font-weight:500;">Every class you showed up for added up to this. Well done on making it through the semester — rest a little, then go make the next one even better.</p>
+    </div>
   </div>
 </div>
+
+<style>
+@keyframes heartfeltFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes heartfeltFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+</style>
 
 
 <!-- Add Attendance Modal -->
