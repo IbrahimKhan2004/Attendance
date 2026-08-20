@@ -92,23 +92,6 @@ document.addEventListener('DOMContentLoaded', async () => {
              const endedDate = `${endedAtDate.getFullYear()}-${String(endedAtDate.getMonth() + 1).padStart(2, '0')}-${String(endedAtDate.getDate()).padStart(2, '0')}`;
              const datesElem = document.getElementById('semesterEndedDates');
              if (datesElem) datesElem.innerText = `${lastSemester.startDate} — ${endedDate}`;
-
-             const logElem = document.getElementById('semesterEndedLog');
-             if (logElem) {
-               const dayLog = lastSemester.dayLog || [];
-               if (dayLog.length === 0) {
-                 logElem.innerHTML = `<div style="text-align:center; color:var(--muted); font-size:0.85rem; padding:1rem;">No attendance records found.</div>`;
-               } else {
-                 logElem.innerHTML = dayLog.map(d => {
-                   const pct = d.total === 0 ? 0 : Math.round((d.present / d.total) * 100);
-                   const color = pct >= 75 ? 'var(--green)' : pct >= 60 ? 'var(--yellow)' : 'var(--red)';
-                   return `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:0.85rem;">
-                     <span style="color:var(--muted);">${d.date}</span>
-                     <span style="color:${color}; font-weight:600;">${d.present}/${d.total} • ${pct}%</span>
-                   </div>`;
-                 }).join('');
-               }
-             }
           }
         }
       }
