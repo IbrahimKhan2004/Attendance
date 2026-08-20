@@ -247,6 +247,9 @@ export class AttendanceModule {
     const slotStart = {};
     if (PERIODS) PERIODS.forEach(p => { slotStart[p.slot] = p.start; });
 
+    if (!this.editingDay) this.editingDay = null;
+    if (!this.openMenuDay) this.openMenuDay = null;
+
     const sortedDates = Object.keys(data).sort().reverse();
     const logHtml = sortedDates.map(dateKey => {
       const day = data[dateKey];
@@ -258,6 +261,8 @@ export class AttendanceModule {
       const dayTotal = keys.length;
       const dayPct = dayTotal === 0 ? 0 : Math.round((dayPresent / dayTotal) * 100);
       const dayColor = dayPct >= 75 ? 'var(--green)' : dayPct >= 60 ? 'var(--yellow)' : 'var(--red)';
+      const isEditing = this.editingDay === dateKey;
+      const isMenuOpen = this.openMenuDay === dateKey;
 
       const pBtns = keys.map(pKey => {
         const parts = pKey.split('_');
@@ -266,22 +271,47 @@ export class AttendanceModule {
         const status = day[pKey];
         const isPres = status === 'P';
         const timeLabel = slotStart[slot] ? formatTime12(slotStart[slot]) : slot;
-        return `<button onclick="window.togglePeriod('${dateKey}','${pKey}')"
+        const tag = isEditing ? 'button' : 'div';
+        const clickAttr = isEditing ? ` onclick="window.togglePeriod('${dateKey}','${pKey}')"` : '';
+        return `<${tag}${clickAttr}
           style="padding: 4px 10px; border-radius: 8px; border: 1px solid ${isPres ? 'var(--green)' : 'var(--red)'}; background: ${isPres ? 'rgba(48,209,88,0.1)' : 'rgba(255,69,58,0.1)'}; color: ${isPres ? 'var(--green)' : 'var(--red)'}; font-size: 0.75rem; font-weight: 600;">
           ${sub} <span style="font-size:0.65rem; opacity:0.8">${timeLabel}</span>
-        </button>`;
+        </${tag}>`;
       }).join('');
+
+      const menu = isMenuOpen ? `<div style="position:absolute; top:26px; right:0; background:var(--card); border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15); min-width:110px; overflow:hidden; z-index:10;">
+            <button onclick="window.startEditDay('${dateKey}')" style="width:100%; text-align:left; padding:8px 12px; font-size:0.75rem; background:transparent; border:none; display:flex; align-items:center; gap:6px; color:var(--text);">Edit day</button>
+            <button onclick="window.deleteAttendanceDay('${dateKey}')" style="width:100%; text-align:left; padding:8px 12px; font-size:0.75rem; background:transparent; border:none; display:flex; align-items:center; gap:6px; color:var(--accent2);">Delete day</button>
+          </div>` : '';
+
       return `<div class="ios-list-item">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
           <div style="font-size:0.85rem; font-weight:600; color:var(--muted);">${dateKey.slice(5)} • ${dayName}</div>
-          <div style="display:flex; align-items:center; gap:0.5rem;">
+          <div style="display:flex; align-items:center; gap:0.5rem; position:relative;">
             <span style="font-size:0.75rem; font-weight:600; color:${dayColor};">${dayPresent}/${dayTotal} • ${dayPct}%</span>
-            <button onclick="window.deleteAttendanceDay('${dateKey}')" style="background:var(--accent2); color:white; border:none; border-radius:4px; padding:2px 6px; font-size:0.7rem;">Delete</button>
+            ${isEditing ? `<button onclick="window.stopEditDay()" style="background:var(--accent); color:white; border:none; border-radius:4px; padding:2px 8px; font-size:0.7rem;">Done</button>` : `<button onclick="window.toggleDayMenu('${dateKey}')" aria-label="More options" style="background:transparent; border:none; color:var(--muted); font-size:1rem; padding:2px 6px; line-height:1;">⋮</button>`}
+            ${menu}
           </div>
         </div>
         <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">${pBtns}</div>
       </div>`;
     }).join('');
+
+    window.toggleDayMenu = (dateStr) => {
+      this.openMenuDay = this.openMenuDay === dateStr ? null : dateStr;
+      this.renderLog(this.attData);
+    };
+
+    window.startEditDay = (dateStr) => {
+      this.editingDay = dateStr;
+      this.openMenuDay = null;
+      this.renderLog(this.attData);
+    };
+
+    window.stopEditDay = () => {
+      this.editingDay = null;
+      this.renderLog(this.attData);
+    };
 
     window.deleteAttendanceDay = async (dateStr) => {
         if(!confirm(`Delete attendance for ${dateStr}?`)) return;
