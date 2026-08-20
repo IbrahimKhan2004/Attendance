@@ -147,7 +147,7 @@ export class AttendanceModule {
             <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase;">Streak</div>
           </div>
         </div>
-        ${pct < 75 && total > 0 ? `<div class="ios-card" style="text-align:center; padding:0.75rem; margin-bottom:1rem;"><span style="color:var(--yellow); font-weight:600;">${needed}</span> more needed for 75%</div>` : ''}
+        ${pct < 75 && total > 0 ? `<div class="ios-card" style="text-align:center; padding:0.75rem; margin-bottom:1rem;"><span style="color:var(--yellow); font-weight:600;">${needed}</span> more needed for 75%<div style="font-size:0.7rem; color:var(--muted); margin-top:0.25rem;">Attend the next ${needed} classes in a row (no misses) to reach 75%</div></div>` : ''}
         ${pct >= 75 && canMiss > 0 ? `<div class="ios-card" style="text-align:center; padding:0.75rem; margin-bottom:1rem;"><span style="color:var(--green); font-weight:600;">${canMiss}</span> safe to miss overall 😅</div>` : ''}
       `;
     }
