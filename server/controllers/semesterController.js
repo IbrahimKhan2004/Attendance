@@ -75,7 +75,16 @@ const getSemesterHistory = async (req, res) => {
                     percentage = Math.round((presentPeriods / totalPeriods) * 100) + '%';
                 }
 
-                return { ...sem, percentage };
+                // Day-wise log for display (e.g. semester-ended overlay)
+                const dayLog = semAttendance
+                    .map(record => {
+                        const dayTotal = record.records.length;
+                        const dayPresent = record.records.filter(r => r.status === 'present').length;
+                        return { date: record.date, present: dayPresent, total: dayTotal };
+                    })
+                    .sort((a, b) => (a.date < b.date ? 1 : -1));
+
+                return { ...sem, percentage, dayLog };
             });
         }
 
