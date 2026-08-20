@@ -31,9 +31,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const pageManager = new PageManager();
   const clockModule = new ClockModule();
+  const attendanceModule = new AttendanceModule();
 
   // Register Profile Module globally so header can access it
   window.pageManager = pageManager;
+  // Expose so HolidaysModule (calendar view) can read attendance day status
+  window.attendanceModule = attendanceModule;
   window.goToProfile = () => {
     pageManager.showPage('profile');
 
@@ -45,7 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Register pages
   pageManager.registerPage('timetable', new TimetableModule());
   pageManager.registerPage('holidays', new HolidaysModule());
-  pageManager.registerPage('attendance', new AttendanceModule());
+  pageManager.registerPage('attendance', attendanceModule);
   pageManager.registerPage('syllabus', new SyllabusModule());
   pageManager.registerPage('profile', new ProfileModule());
 
