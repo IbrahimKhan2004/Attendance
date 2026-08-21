@@ -252,8 +252,8 @@ body {
   background: var(--card);
 }
 .holcal-officialoff {
-  color: #ff2d55;
-  background: rgba(255, 45, 85, 0.15);
+  color: var(--accent);
+  background: rgba(10, 132, 255, 0.15);
 }
 .holcal-today {
   box-shadow: 0 0 0 1.5px var(--accent) inset;
@@ -276,7 +276,7 @@ body {
 .holcal-dot-green { background: var(--green); }
 .holcal-dot-red { background: var(--red); }
 .holcal-dot-none { background: var(--muted); }
-.holcal-dot-officialoff { background: #ff2d55; }
+.holcal-dot-officialoff { background: var(--accent); }
 
 .holcal-overlay {
   position: fixed;
@@ -330,8 +330,8 @@ body {
   color: var(--muted);
 }
 .holcal-popup-badge-officialoff {
-  background: rgba(255, 45, 85, 0.12);
-  color: #ff2d55;
+  background: rgba(10, 132, 255, 0.12);
+  color: var(--accent);
 }
 .holcal-popup-note {
   font-size: 0.75rem;
