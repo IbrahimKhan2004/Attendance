@@ -76,11 +76,15 @@ export class HolidaysModule {
     return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
   }
 
-  // Returns { type: 'holiday'|'green'|'red'|'none', holiday? } for a given date.
+  // Returns { type: 'holiday'|'officialoff'|'green'|'red'|'none', holiday? } for a given date.
   getDayStatus(dateStr, todayStr) {
-    const { holidays: HOLIDAYS } = window.globalConfig || {};
+    const { holidays: HOLIDAYS, offDays, timetable: TIMETABLE } = window.globalConfig || {};
     const holiday = HOLIDAYS && HOLIDAYS.find(h => h.date === dateStr);
     if (holiday) return { type: 'holiday', holiday };
+
+    const dayIdx = new Date(dateStr + 'T00:00:00').getDay();
+    const isOfficialOff = (offDays && offDays.includes(dayIdx)) || (TIMETABLE && !TIMETABLE[dayIdx]);
+    if (isOfficialOff) return { type: 'officialoff' };
 
     if (!this.isWithinSemester(dateStr)) return { type: 'none' };
 
@@ -94,8 +98,8 @@ export class HolidaysModule {
       return { type: 'green' };
     }
 
-    if (dateStr < todayStr) return { type: 'none' };
-    return { type: 'green' };
+    // No attendance recorded — whether it's a future date or a past gap, there's no data to show.
+    return { type: 'none' };
   }
 
   render() {
@@ -117,6 +121,7 @@ export class HolidaysModule {
       const isToday = ds === todayStr;
       let cls = 'holcal-cell';
       if (status.type === 'holiday') cls += ' holcal-holiday';
+      else if (status.type === 'officialoff') cls += ' holcal-officialoff';
       else if (status.type === 'red') cls += ' holcal-red';
       else if (status.type === 'green') cls += ' holcal-green';
       else cls += ' holcal-none';
@@ -137,6 +142,7 @@ export class HolidaysModule {
       <div class="holcal-grid">${cellsHtml}</div>
       <div class="holcal-legend">
         <span><i class="holcal-dot holcal-dot-holiday"></i>holiday</span>
+        <span><i class="holcal-dot holcal-dot-officialoff"></i>official off</span>
         <span><i class="holcal-dot holcal-dot-green"></i>present</span>
         <span><i class="holcal-dot holcal-dot-red"></i>missed</span>
         <span><i class="holcal-dot holcal-dot-none"></i>no data</span>
@@ -166,6 +172,13 @@ export class HolidaysModule {
         <div class="holcal-popup-badge holcal-popup-badge-holiday">${remaining}</div>
         <div class="holcal-popup-note">No attendance on this day. Excluded from your percentage.</div>
       `;
+    } else if (status.type === 'officialoff') {
+      const dayName = d.toLocaleDateString(undefined, { weekday: 'long' });
+      title = dayName;
+      body = `
+        <div class="holcal-popup-badge holcal-popup-badge-officialoff">Official OFF!</div>
+        <div class="holcal-popup-note">This day is a weekly off. No attendance is taken.</div>
+      `;
     } else if (status.type === 'red') {
       title = 'Attendance';
       body = `
@@ -174,16 +187,16 @@ export class HolidaysModule {
       `;
     } else if (status.type === 'none') {
       title = 'Attendance';
+      const isFuture = dateStr > todayStr;
       body = `
         <div class="holcal-popup-badge holcal-popup-badge-none">No data</div>
-        <div class="holcal-popup-note">No semester was active, or no attendance was recorded this day.</div>
+        <div class="holcal-popup-note">${isFuture ? "This day hasn't arrived yet." : 'No semester was active, or no attendance was recorded this day.'}</div>
       `;
     } else {
       title = 'Attendance';
-      const isFuture = dateStr > todayStr;
       body = `
-        <div class="holcal-popup-badge holcal-popup-badge-green">${isFuture ? 'Upcoming' : 'Present'}</div>
-        <div class="holcal-popup-note">${isFuture ? "This day hasn't arrived yet." : 'At least one subject was marked present this day.'}</div>
+        <div class="holcal-popup-badge holcal-popup-badge-green">Present</div>
+        <div class="holcal-popup-note">At least one subject was marked present this day.</div>
       `;
     }
 
