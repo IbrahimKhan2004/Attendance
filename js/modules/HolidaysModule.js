@@ -40,7 +40,8 @@ export class HolidaysModule {
       const activeRes = await fetchWithAuth('/semester/active');
       const active = activeRes.ok ? await activeRes.json() : null;
       if (active && active.status === 'active') {
-        ranges.push({ start: active.startDate, end: null });
+        // Active semester tracks the live config, so off-day toggles reflect immediately.
+        ranges.push({ start: active.startDate, end: null, live: true });
       }
 
       const historyRes = await fetchWithAuth('/semester/history');
@@ -48,7 +49,15 @@ export class HolidaysModule {
       history.forEach(sem => {
         const end = sem.endedAt ? new Date(sem.endedAt) : null;
         const endStr = end ? `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}` : null;
-        ranges.push({ start: sem.startDate, end: endStr });
+        ranges.push({
+          start: sem.startDate,
+          end: endStr,
+          live: false,
+          // Older semesters saved before offDays snapshotting existed have no offDays field —
+          // fall back to deriving off-days from that semester's own timetable snapshot instead.
+          offDays: sem.offDays && sem.offDays.length ? sem.offDays : null,
+          timetable: sem.timetable || null
+        });
       });
     } catch (e) {
       console.error('Failed to load semester ranges', e);
@@ -56,13 +65,14 @@ export class HolidaysModule {
     this.semesterRanges = ranges;
   }
 
-  // Whether a date falls inside any known semester's active window
-  isWithinSemester(dateStr) {
-    return this.semesterRanges.some(r => {
+  // Finds the semester range a date belongs to, so we use that semester's own off-day pattern
+  // instead of always assuming the current one (off-days can change between semesters).
+  getRangeForDate(dateStr) {
+    return this.semesterRanges.find(r => {
       if (dateStr < r.start) return false;
       if (r.end !== null && dateStr > r.end) return false;
       return true;
-    });
+    }) || null;
   }
 
   changeMonth(delta) {
@@ -78,15 +88,20 @@ export class HolidaysModule {
 
   // Returns { type: 'holiday'|'officialoff'|'green'|'red'|'none', holiday? } for a given date.
   getDayStatus(dateStr, todayStr) {
-    const { holidays: HOLIDAYS, offDays, timetable: TIMETABLE } = window.globalConfig || {};
+    const { holidays: HOLIDAYS } = window.globalConfig || {};
     const holiday = HOLIDAYS && HOLIDAYS.find(h => h.date === dateStr);
     if (holiday) return { type: 'holiday', holiday };
+
+    const range = this.getRangeForDate(dateStr);
+    if (!range) return { type: 'none' };
+
+    const { offDays, timetable: TIMETABLE } = range.live
+      ? window.globalConfig || {}
+      : { offDays: range.offDays, timetable: range.timetable };
 
     const dayIdx = new Date(dateStr + 'T00:00:00').getDay();
     const isOfficialOff = (offDays && offDays.includes(dayIdx)) || (TIMETABLE && !TIMETABLE[dayIdx]);
     if (isOfficialOff) return { type: 'officialoff' };
-
-    if (!this.isWithinSemester(dateStr)) return { type: 'none' };
 
     const attMod = window.attendanceModule;
     const dayData = attMod && attMod.attData ? attMod.attData[dateStr] : null;
