@@ -1,4 +1,5 @@
 import { getTodayDateString } from '../utils/timeUtils.js';
+import { fetchWithAuth } from '../core/api.js';
 
 const DAY_HEADERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -8,6 +9,7 @@ export class HolidaysModule {
     this.containerId = 'holidayList';
     this.viewYear = null;
     this.viewMonth = null; // 0-11
+    this.semesterRanges = null; // [{start, end}] end is null for the active semester (open-ended)
 
     window.holidaysModule = this;
     window.holCalPrevMonth = () => this.changeMonth(-1);
@@ -26,7 +28,41 @@ export class HolidaysModule {
     if (attMod && !attMod.attData) {
       await attMod.fetchData();
     }
+    if (this.semesterRanges === null) {
+      await this.fetchSemesterRanges();
+    }
     this.render();
+  }
+
+  async fetchSemesterRanges() {
+    const ranges = [];
+    try {
+      const activeRes = await fetchWithAuth('/semester/active');
+      const active = activeRes.ok ? await activeRes.json() : null;
+      if (active && active.status === 'active') {
+        ranges.push({ start: active.startDate, end: null });
+      }
+
+      const historyRes = await fetchWithAuth('/semester/history');
+      const history = historyRes.ok ? await historyRes.json() : [];
+      history.forEach(sem => {
+        const end = sem.endedAt ? new Date(sem.endedAt) : null;
+        const endStr = end ? `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}` : null;
+        ranges.push({ start: sem.startDate, end: endStr });
+      });
+    } catch (e) {
+      console.error('Failed to load semester ranges', e);
+    }
+    this.semesterRanges = ranges;
+  }
+
+  // Whether a date falls inside any known semester's active window
+  isWithinSemester(dateStr) {
+    return this.semesterRanges.some(r => {
+      if (dateStr < r.start) return false;
+      if (r.end !== null && dateStr > r.end) return false;
+      return true;
+    });
   }
 
   changeMonth(delta) {
@@ -40,19 +76,25 @@ export class HolidaysModule {
     return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
   }
 
-  // Returns { type: 'holiday'|'green'|'red', holiday? } for a given date.
+  // Returns { type: 'holiday'|'green'|'red'|'none', holiday? } for a given date.
   getDayStatus(dateStr, todayStr) {
     const { holidays: HOLIDAYS } = window.globalConfig || {};
     const holiday = HOLIDAYS && HOLIDAYS.find(h => h.date === dateStr);
     if (holiday) return { type: 'holiday', holiday };
 
+    if (!this.isWithinSemester(dateStr)) return { type: 'none' };
+
     const attMod = window.attendanceModule;
     const dayData = attMod && attMod.attData ? attMod.attData[dateStr] : null;
 
     if (dayData) {
-      const hasAbsent = Object.values(dayData).includes('A');
-      if (dateStr < todayStr && hasAbsent) return { type: 'red' };
+      const statuses = Object.values(dayData);
+      const allAbsent = statuses.length > 0 && statuses.every(s => s === 'A');
+      if (dateStr < todayStr && allAbsent) return { type: 'red' };
+      return { type: 'green' };
     }
+
+    if (dateStr < todayStr) return { type: 'none' };
     return { type: 'green' };
   }
 
@@ -76,7 +118,8 @@ export class HolidaysModule {
       let cls = 'holcal-cell';
       if (status.type === 'holiday') cls += ' holcal-holiday';
       else if (status.type === 'red') cls += ' holcal-red';
-      else cls += ' holcal-green';
+      else if (status.type === 'green') cls += ' holcal-green';
+      else cls += ' holcal-none';
       if (isToday) cls += ' holcal-today';
 
       cellsHtml += `<div class="${cls}" onclick="window.holCalDayTap('${ds}')">${d}</div>`;
@@ -96,6 +139,7 @@ export class HolidaysModule {
         <span><i class="holcal-dot holcal-dot-holiday"></i>holiday</span>
         <span><i class="holcal-dot holcal-dot-green"></i>present</span>
         <span><i class="holcal-dot holcal-dot-red"></i>missed</span>
+        <span><i class="holcal-dot holcal-dot-none"></i>no data</span>
       </div>
       <div id="holcalPopupWrap"></div>
     `;
@@ -126,14 +170,20 @@ export class HolidaysModule {
       title = 'Attendance';
       body = `
         <div class="holcal-popup-badge holcal-popup-badge-red">Missed</div>
-        <div class="holcal-popup-note">At least one subject was marked absent this day.</div>
+        <div class="holcal-popup-note">All subjects were marked absent this day.</div>
+      `;
+    } else if (status.type === 'none') {
+      title = 'Attendance';
+      body = `
+        <div class="holcal-popup-badge holcal-popup-badge-none">No data</div>
+        <div class="holcal-popup-note">No semester was active, or no attendance was recorded this day.</div>
       `;
     } else {
       title = 'Attendance';
       const isFuture = dateStr > todayStr;
       body = `
         <div class="holcal-popup-badge holcal-popup-badge-green">${isFuture ? 'Upcoming' : 'Present'}</div>
-        <div class="holcal-popup-note">${isFuture ? "This day hasn't arrived yet." : 'No missed subjects recorded this day.'}</div>
+        <div class="holcal-popup-note">${isFuture ? "This day hasn't arrived yet." : 'At least one subject was marked present this day.'}</div>
       `;
     }
 
