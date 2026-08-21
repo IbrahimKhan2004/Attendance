@@ -100,12 +100,14 @@ const startSemester = async (req, res) => {
         const sectionName = config ? config.sectionName : 'Unknown Section';
         const subjects = config ? config.subjects : [];
         const timetable = config ? config.timetable : {};
+        const offDays = config ? config.offDays : [];
 
         const newSemester = await Semester.create({
             sectionName,
             startDate,
             subjects,
             timetable,
+            offDays,
             status: 'active'
         });
 
