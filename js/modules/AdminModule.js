@@ -8,6 +8,23 @@ export class AdminModule {
     this.users = [];
     this.allAttendance = [];
     this.ttDay = 1; // which day is currently open in the Timetable editor
+    this.openSections = new Set(['sec_semesterControl']); // which accordion sections stay expanded across re-renders
+  }
+
+  toggleSection(id) {
+    const body = document.getElementById(id);
+    const chevron = document.getElementById(id + '_chevron');
+    if (!body) return;
+    const isOpen = body.style.display !== 'none';
+    body.style.display = isOpen ? 'none' : 'block';
+    if (chevron) chevron.style.transform = isOpen ? 'rotate(-90deg)' : 'rotate(0deg)';
+    if (isOpen) this.openSections.delete(id);
+    else this.openSections.add(id);
+  }
+
+  sectionState(id) {
+    const isOpen = this.openSections.has(id);
+    return { display: isOpen ? 'block' : 'none', rotate: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)' };
   }
 
   async onShow() {
@@ -49,10 +66,10 @@ export class AdminModule {
     const syllabus = gc.syllabus;
 
     let holidaysHtml = holidays.map((h, i) => `
-      <div style="display:flex; justify-content:space-between; align-items:center; padding: 0.5rem; border-bottom: 1px solid var(--border);">
-          <div style="flex:1;">
-            <input type="text" id="holidayName_${i}" value="${h.name}" style="background:var(--bg); color:white; border:1px solid var(--border); border-radius:4px; padding:4px;">
-            <input type="date" id="holidayDate_${i}" value="${h.date}" style="background:var(--bg); color:white; border:1px solid var(--border); border-radius:4px; padding:4px; color-scheme: dark;">
+      <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:0.5rem; padding: 0.5rem; border-bottom: 1px solid var(--border);">
+          <div style="flex:1; min-width:0; display:flex; flex-wrap:wrap; gap:0.4rem;">
+            <input type="text" id="holidayName_${i}" value="${h.name}" style="background:var(--bg); color:white; border:1px solid var(--border); border-radius:4px; padding:4px; flex:1; min-width:100px;">
+            <input type="date" id="holidayDate_${i}" value="${h.date}" style="background:var(--bg); color:white; border:1px solid var(--border); border-radius:4px; padding:4px; color-scheme: dark; min-width:0;">
           </div>
           <div style="display:flex; gap:0.5rem;">
             ${i > 0 ? `<button onclick="window.adminModule.swapHoliday(${i}, -1)" style="background:var(--surface); color:white; border:1px solid var(--border); padding:4px 8px; border-radius:4px;">↑</button>` : ''}
@@ -68,43 +85,63 @@ export class AdminModule {
       <div style="margin-top: 1rem;">
         <h3>Configuration</h3>
 
-        <div id="semesterControlWrap" style="margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);">
-          <h4>Semester Control</h4>
-          <div id="semesterStatusArea" style="margin-top: 0.5rem;">Loading semester status...</div>
-        </div>
-
-        <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);">
-          <h4>College & Section Info</h4>
-          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom: 0.5rem;">
-            <input type="text" id="confCollege" value="${gc.collegeName || ''}" placeholder="College Name" style="flex:1; padding: 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: white;">
-            <input type="text" id="confLocation" value="${gc.location || ''}" placeholder="Location" style="flex:1; padding: 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: white;">
+        <div id="semesterControlWrap" style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow:hidden;">
+          <div onclick="window.adminModule.toggleSection('sec_semesterControl')" style="display:flex; align-items:center; justify-content:space-between; padding:1rem; cursor:pointer;">
+            <h4 style="margin:0;">Semester Control</h4>
+            <span id="sec_semesterControl_chevron" style="transition:transform 0.2s; display:inline-block; transform:${this.sectionState('sec_semesterControl').rotate};">▾</span>
           </div>
-          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom: 0.5rem;">
-            <input type="text" id="confSection" value="${gc.sectionName || ''}" placeholder="Section" style="flex:1; padding: 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: white;">
-            <input type="text" id="confYear" value="${gc.year || ''}" placeholder="Year" style="flex:1; padding: 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: white;">
+          <div id="sec_semesterControl" style="padding:0 1rem 1rem; display:${this.sectionState('sec_semesterControl').display};">
+            <div id="semesterStatusArea" style="margin-top: 0.5rem;">Loading semester status...</div>
           </div>
         </div>
 
-        <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);">
-          <h4>Off Days (Check to set as OFF)</h4>
-          <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top: 0.5rem;">
-            ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => `
-              <label style="display:flex; align-items:center; gap:0.25rem;">
-                <input type="checkbox" id="offDay_${i}" value="${i}" ${offDays.includes(i) ? 'checked' : ''} onchange="window.adminModule.toggleOffDay(${i}, this.checked)">
-                ${d}
-              </label>
-            `).join('')}
+        <div style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow:hidden;">
+          <div onclick="window.adminModule.toggleSection('sec_collegeInfo')" style="display:flex; align-items:center; justify-content:space-between; padding:1rem; cursor:pointer;">
+            <h4 style="margin:0;">College & Section Info</h4>
+            <span id="sec_collegeInfo_chevron" style="transition:transform 0.2s; display:inline-block; transform:${this.sectionState('sec_collegeInfo').rotate};">▾</span>
+          </div>
+          <div id="sec_collegeInfo" style="padding:0 1rem 1rem; display:${this.sectionState('sec_collegeInfo').display};">
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom: 0.5rem;">
+              <input type="text" id="confCollege" value="${gc.collegeName || ''}" placeholder="College Name" style="flex:1; padding: 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: white;">
+              <input type="text" id="confLocation" value="${gc.location || ''}" placeholder="Location" style="flex:1; padding: 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: white;">
+            </div>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom: 0.5rem;">
+              <input type="text" id="confSection" value="${gc.sectionName || ''}" placeholder="Section" style="flex:1; padding: 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: white;">
+              <input type="text" id="confYear" value="${gc.year || ''}" placeholder="Year" style="flex:1; padding: 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: white;">
+            </div>
           </div>
         </div>
 
-        <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);">
-          <h4>Holidays</h4>
-          <div style="display:flex; gap:0.5rem; margin-bottom: 0.5rem;">
-            <button onclick="window.adminModule.addHoliday()" style="background:var(--surface); border:1px solid var(--border); color:white; padding:4px 8px; border-radius:4px;">+ Add Holiday</button>
-            <button onclick="window.adminModule.openHolidayImportModal()" style="background:var(--bg); border:1px solid var(--accent); color:var(--accent); padding:4px 8px; border-radius:4px; font-weight:600;">⇪ Import from JSON</button>
+        <div style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow:hidden;">
+          <div onclick="window.adminModule.toggleSection('sec_offDays')" style="display:flex; align-items:center; justify-content:space-between; padding:1rem; cursor:pointer;">
+            <h4 style="margin:0;">Off Days (Check to set as OFF)</h4>
+            <span id="sec_offDays_chevron" style="transition:transform 0.2s; display:inline-block; transform:${this.sectionState('sec_offDays').rotate};">▾</span>
           </div>
-          <div id="holidaysList" style="margin-top:0.5rem;">
-            ${holidaysHtml}
+          <div id="sec_offDays" style="padding:0 1rem 1rem; display:${this.sectionState('sec_offDays').display};">
+            <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top: 0.5rem;">
+              ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => `
+                <label style="display:flex; align-items:center; gap:0.25rem;">
+                  <input type="checkbox" id="offDay_${i}" value="${i}" ${offDays.includes(i) ? 'checked' : ''} onchange="window.adminModule.toggleOffDay(${i}, this.checked)">
+                  ${d}
+                </label>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow:hidden;">
+          <div onclick="window.adminModule.toggleSection('sec_holidays')" style="display:flex; align-items:center; justify-content:space-between; padding:1rem; cursor:pointer;">
+            <h4 style="margin:0;">Holidays</h4>
+            <span id="sec_holidays_chevron" style="transition:transform 0.2s; display:inline-block; transform:${this.sectionState('sec_holidays').rotate};">▾</span>
+          </div>
+          <div id="sec_holidays" style="padding:0 1rem 1rem; display:${this.sectionState('sec_holidays').display};">
+            <div style="display:flex; gap:0.5rem; margin-bottom: 0.5rem;">
+              <button onclick="window.adminModule.addHoliday()" style="background:var(--surface); border:1px solid var(--border); color:white; padding:4px 8px; border-radius:4px;">+ Add Holiday</button>
+              <button onclick="window.adminModule.openHolidayImportModal()" style="background:var(--bg); border:1px solid var(--accent); color:var(--accent); padding:4px 8px; border-radius:4px; font-weight:600;">⇪ Import from JSON</button>
+            </div>
+            <div id="holidaysList" style="margin-top:0.5rem;">
+              ${holidaysHtml}
+            </div>
           </div>
         </div>
 
@@ -125,50 +162,65 @@ export class AdminModule {
           </div>
         </div>
 
-        <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);">
-          <h4>Subjects</h4>
-          <div id="subjectsChips" style="display:flex; gap:0.5rem; flex-wrap:wrap; margin: 0.5rem 0;">
-            ${subjects.map((s, i) => `
-              <span style="display:flex; align-items:center; gap:6px; background:var(--bg); border:1px solid var(--border); padding:4px 8px; border-radius:16px; font-size:0.85rem;">
-                ${s}
-                <button onclick="window.adminModule.deleteSubject(${i})" style="background:none; border:none; color:var(--accent2); cursor:pointer; font-weight:700; padding:0;">✕</button>
-              </span>
-            `).join('')}
+        <div style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow:hidden;">
+          <div onclick="window.adminModule.toggleSection('sec_subjects')" style="display:flex; align-items:center; justify-content:space-between; padding:1rem; cursor:pointer;">
+            <h4 style="margin:0;">Subjects</h4>
+            <span id="sec_subjects_chevron" style="transition:transform 0.2s; display:inline-block; transform:${this.sectionState('sec_subjects').rotate};">▾</span>
           </div>
-          <div style="display:flex; gap:0.5rem;">
-            <input type="text" id="newSubjectInput" placeholder="e.g. DBMS" style="flex:1; padding:8px; border-radius:4px; border:1px solid var(--border); background:var(--bg); color:white;">
-            <button onclick="window.adminModule.addSubject()" style="background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; font-weight:600;">+ Add</button>
+          <div id="sec_subjects" style="padding:0 1rem 1rem; display:${this.sectionState('sec_subjects').display};">
+            <div id="subjectsChips" style="display:flex; gap:0.5rem; flex-wrap:wrap; margin: 0.5rem 0;">
+              ${subjects.map((s, i) => `
+                <span style="display:flex; align-items:center; gap:6px; background:var(--bg); border:1px solid var(--border); padding:4px 8px; border-radius:16px; font-size:0.85rem;">
+                  ${s}
+                  <button onclick="window.adminModule.deleteSubject(${i})" style="background:none; border:none; color:var(--accent2); cursor:pointer; font-weight:700; padding:0;">✕</button>
+                </span>
+              `).join('')}
+            </div>
+            <div style="display:flex; gap:0.5rem;">
+              <input type="text" id="newSubjectInput" placeholder="e.g. DBMS" style="flex:1; padding:8px; border-radius:4px; border:1px solid var(--border); background:var(--bg); color:white;">
+              <button onclick="window.adminModule.addSubject()" style="background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; font-weight:600;">+ Add</button>
+            </div>
           </div>
         </div>
 
-        <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);">
-          <h4>Periods (time slots, same every day)</h4>
-          <div id="periodsList" style="margin-top:0.5rem;">
-            ${periods.map((p, i) => `
-              <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.5rem;">
-                <input type="text" id="pdLabel_${i}" value="${p.label ?? (i+1)}" placeholder="#" style="width:40px; padding:6px; border-radius:4px; border:1px solid var(--border); background:var(--bg); color:white; text-align:center;">
-                <input type="time" id="pdStart_${i}" value="${p.start || ''}" style="flex:1; padding:6px; border-radius:4px; border:1px solid var(--border); background:var(--bg); color:white; color-scheme: dark;">
-                <span style="color:var(--muted);">to</span>
-                <input type="time" id="pdEnd_${i}" value="${p.end || ''}" style="flex:1; padding:6px; border-radius:4px; border:1px solid var(--border); background:var(--bg); color:white; color-scheme: dark;">
-                <button onclick="window.adminModule.deletePeriod(${i})" style="background:var(--accent2); color:white; border:none; padding:6px 10px; border-radius:4px;">Del</button>
-              </div>
-            `).join('')}
+        <div style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow:hidden;">
+          <div onclick="window.adminModule.toggleSection('sec_periods')" style="display:flex; align-items:center; justify-content:space-between; padding:1rem; cursor:pointer;">
+            <h4 style="margin:0;">Periods (time slots, same every day)</h4>
+            <span id="sec_periods_chevron" style="transition:transform 0.2s; display:inline-block; transform:${this.sectionState('sec_periods').rotate};">▾</span>
           </div>
-          <button onclick="window.adminModule.addPeriod()" style="background:var(--surface); border:1px solid var(--border); color:white; padding:6px 10px; border-radius:4px;">+ Add Period</button>
+          <div id="sec_periods" style="padding:0 1rem 1rem; display:${this.sectionState('sec_periods').display};">
+            <div id="periodsList" style="margin-top:0.5rem;">
+              ${periods.map((p, i) => `
+                <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap; margin-bottom:0.5rem;">
+                  <input type="text" id="pdLabel_${i}" value="${p.label ?? (i+1)}" placeholder="#" style="width:40px; padding:6px; border-radius:4px; border:1px solid var(--border); background:var(--bg); color:white; text-align:center;">
+                  <input type="time" id="pdStart_${i}" value="${p.start || ''}" style="flex:1; min-width:100px; padding:6px; border-radius:4px; border:1px solid var(--border); background:var(--bg); color:white; color-scheme: dark;">
+                  <span style="color:var(--muted);">to</span>
+                  <input type="time" id="pdEnd_${i}" value="${p.end || ''}" style="flex:1; min-width:100px; padding:6px; border-radius:4px; border:1px solid var(--border); background:var(--bg); color:white; color-scheme: dark;">
+                  <button onclick="window.adminModule.deletePeriod(${i})" style="background:var(--accent2); color:white; border:none; padding:6px 10px; border-radius:4px;">Del</button>
+                </div>
+              `).join('')}
+            </div>
+            <button onclick="window.adminModule.addPeriod()" style="background:var(--surface); border:1px solid var(--border); color:white; padding:6px 10px; border-radius:4px;">+ Add Period</button>
+          </div>
         </div>
 
-        <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);">
-          <h4>Timetable</h4>
-          <p style="font-size:0.8rem; color:var(--muted); margin-bottom:0.5rem;">Pick a subject for each period, per day. Add periods above first — or import everything at once below.</p>
-          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;">
-            ${DAY_NAMES.map((d, i) => offDays.includes(i) ? '' : `
-              <button onclick="window.adminModule.selectTTDay(${i})" style="background:${i === this.ttDay ? 'var(--accent)' : 'var(--bg)'}; color:white; border:1px solid var(--border); padding:6px 10px; border-radius:6px; font-size:0.8rem;">${d}</button>
-            `).join('')}
+        <div style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow:hidden;">
+          <div onclick="window.adminModule.toggleSection('sec_timetable')" style="display:flex; align-items:center; justify-content:space-between; padding:1rem; cursor:pointer;">
+            <h4 style="margin:0;">Timetable</h4>
+            <span id="sec_timetable_chevron" style="transition:transform 0.2s; display:inline-block; transform:${this.sectionState('sec_timetable').rotate};">▾</span>
           </div>
-          <div id="ttDayEditor">
-            ${offDays.includes(this.ttDay) ? `<p style="color:var(--muted); font-size:0.85rem;">This day is OFF.</p>` : this.renderTTDayEditor(gc)}
+          <div id="sec_timetable" style="padding:0 1rem 1rem; display:${this.sectionState('sec_timetable').display};">
+            <p style="font-size:0.8rem; color:var(--muted); margin-bottom:0.5rem;">Pick a subject for each period, per day. Add periods above first — or import everything at once below.</p>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+              ${DAY_NAMES.map((d, i) => offDays.includes(i) ? '' : `
+                <button onclick="window.adminModule.selectTTDay(${i})" style="background:${i === this.ttDay ? 'var(--accent)' : 'var(--bg)'}; color:white; border:1px solid var(--border); padding:6px 10px; border-radius:6px; font-size:0.8rem;">${d}</button>
+              `).join('')}
+            </div>
+            <div id="ttDayEditor">
+              ${offDays.includes(this.ttDay) ? `<p style="color:var(--muted); font-size:0.85rem;">This day is OFF.</p>` : this.renderTTDayEditor(gc)}
+            </div>
+            <button onclick="window.adminModule.openImportModal()" style="margin-top:0.75rem; background:var(--bg); border:1px solid var(--accent); color:var(--accent); padding:6px 12px; border-radius:6px; font-weight:600; font-size:0.85rem;">⇪ Import Timetable from JSON</button>
           </div>
-          <button onclick="window.adminModule.openImportModal()" style="margin-top:0.75rem; background:var(--bg); border:1px solid var(--accent); color:var(--accent); padding:6px 12px; border-radius:6px; font-weight:600; font-size:0.85rem;">⇪ Import Timetable from JSON</button>
         </div>
 
         <div id="jsonImportModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center; padding:1rem;">
@@ -188,32 +240,37 @@ export class AdminModule {
           </div>
         </div>
 
-        <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);">
-          <h4>Syllabus</h4>
-          <p style="font-size:0.8rem; color:var(--muted); margin-bottom:0.5rem;">Units per subject.</p>
-          <div id="syllabusEditor">
-            ${syllabus.map((s, si) => `
-              <div style="border:1px solid var(--border); border-radius:8px; padding:0.75rem; margin-bottom:0.75rem; background:var(--bg);">
-                <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
-                  <input type="text" id="sylSubject_${si}" value="${s.subject || ''}" placeholder="Subject" style="flex:1; padding:6px; border-radius:4px; border:1px solid var(--border); background:var(--surface); color:white;">
-                  <button onclick="window.adminModule.deleteSyllabusSubject(${si})" style="background:var(--accent2); color:white; border:none; padding:6px 10px; border-radius:4px;">Del</button>
-                </div>
-                <div id="sylUnits_${si}">
-                  ${(s.units || []).map((u, ui) => `
-                    <div style="display:flex; gap:0.5rem; margin-bottom:0.4rem;">
-                      <input type="text" id="sylUnitTitle_${si}_${ui}" value="${u.title || ''}" placeholder="Unit title" style="flex:1; padding:6px; border-radius:4px; border:1px solid var(--border); background:var(--surface); color:white;">
-                      <input type="text" id="sylUnitDesc_${si}_${ui}" value="${u.desc || ''}" placeholder="Description" style="flex:2; padding:6px; border-radius:4px; border:1px solid var(--border); background:var(--surface); color:white;">
-                      <button onclick="window.adminModule.deleteSyllabusUnit(${si},${ui})" style="background:var(--accent2); color:white; border:none; padding:6px 10px; border-radius:4px;">✕</button>
-                    </div>
-                  `).join('')}
-                </div>
-                <button onclick="window.adminModule.addSyllabusUnit(${si})" style="background:var(--surface); border:1px solid var(--border); color:white; padding:4px 8px; border-radius:4px; font-size:0.8rem;">+ Add Unit</button>
-              </div>
-            `).join('')}
+        <div style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow:hidden;">
+          <div onclick="window.adminModule.toggleSection('sec_syllabus')" style="display:flex; align-items:center; justify-content:space-between; padding:1rem; cursor:pointer;">
+            <h4 style="margin:0;">Syllabus</h4>
+            <span id="sec_syllabus_chevron" style="transition:transform 0.2s; display:inline-block; transform:${this.sectionState('sec_syllabus').rotate};">▾</span>
           </div>
-          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-            <button onclick="window.adminModule.addSyllabusSubject()" style="background:var(--surface); border:1px solid var(--border); color:white; padding:6px 10px; border-radius:4px;">+ Add Subject to Syllabus</button>
-            <button onclick="window.adminModule.openSyllabusImportModal()" style="background:var(--bg); border:1px solid var(--accent); color:var(--accent); padding:6px 10px; border-radius:4px; font-weight:600;">⇪ Import from JSON</button>
+          <div id="sec_syllabus" style="padding:0 1rem 1rem; display:${this.sectionState('sec_syllabus').display};">
+            <p style="font-size:0.8rem; color:var(--muted); margin-bottom:0.5rem;">Units per subject.</p>
+            <div id="syllabusEditor">
+              ${syllabus.map((s, si) => `
+                <div style="border:1px solid var(--border); border-radius:8px; padding:0.75rem; margin-bottom:0.75rem; background:var(--bg);">
+                  <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.5rem;">
+                    <input type="text" id="sylSubject_${si}" value="${s.subject || ''}" placeholder="Subject" style="flex:1; min-width:0; padding:6px; border-radius:4px; border:1px solid var(--border); background:var(--surface); color:white;">
+                    <button onclick="window.adminModule.deleteSyllabusSubject(${si})" style="background:var(--accent2); color:white; border:none; padding:6px 10px; border-radius:4px;">Del</button>
+                  </div>
+                  <div id="sylUnits_${si}">
+                    ${(s.units || []).map((u, ui) => `
+                      <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.4rem;">
+                        <input type="text" id="sylUnitTitle_${si}_${ui}" value="${u.title || ''}" placeholder="Unit title" style="flex:1; min-width:120px; padding:6px; border-radius:4px; border:1px solid var(--border); background:var(--surface); color:white;">
+                        <input type="text" id="sylUnitDesc_${si}_${ui}" value="${u.desc || ''}" placeholder="Description" style="flex:2; min-width:150px; padding:6px; border-radius:4px; border:1px solid var(--border); background:var(--surface); color:white;">
+                        <button onclick="window.adminModule.deleteSyllabusUnit(${si},${ui})" style="background:var(--accent2); color:white; border:none; padding:6px 10px; border-radius:4px;">✕</button>
+                      </div>
+                    `).join('')}
+                  </div>
+                  <button onclick="window.adminModule.addSyllabusUnit(${si})" style="background:var(--surface); border:1px solid var(--border); color:white; padding:4px 8px; border-radius:4px; font-size:0.8rem;">+ Add Unit</button>
+                </div>
+              `).join('')}
+            </div>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+              <button onclick="window.adminModule.addSyllabusSubject()" style="background:var(--surface); border:1px solid var(--border); color:white; padding:6px 10px; border-radius:4px;">+ Add Subject to Syllabus</button>
+              <button onclick="window.adminModule.openSyllabusImportModal()" style="background:var(--bg); border:1px solid var(--accent); color:var(--accent); padding:6px 10px; border-radius:4px; font-weight:600;">⇪ Import from JSON</button>
+            </div>
           </div>
         </div>
 
@@ -239,11 +296,16 @@ export class AdminModule {
 
       <div style="margin-top: 2rem;">
         <h3>Manage Students</h3>
-        <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);">
-          <h4>Add Student</h4>
-          <input type="text" id="newStudentUsername" placeholder="Username" style="width: 100%; padding: 8px; margin-bottom: 0.5rem; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: white;">
-          <input type="text" id="newStudentPassword" placeholder="Password" style="width: 100%; padding: 8px; margin-bottom: 0.5rem; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: white;">
-          <button onclick="window.adminModule.addStudent()" style="background:var(--accent); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:600;">Add Student</button>
+        <div style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow:hidden;">
+          <div onclick="window.adminModule.toggleSection('sec_addStudent')" style="display:flex; align-items:center; justify-content:space-between; padding:1rem; cursor:pointer;">
+            <h4 style="margin:0;">Add Student</h4>
+            <span id="sec_addStudent_chevron" style="transition:transform 0.2s; display:inline-block; transform:${this.sectionState('sec_addStudent').rotate};">▾</span>
+          </div>
+          <div id="sec_addStudent" style="padding:0 1rem 1rem; display:${this.sectionState('sec_addStudent').display};">
+            <input type="text" id="newStudentUsername" placeholder="Username" style="width: 100%; padding: 8px; margin-bottom: 0.5rem; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: white; box-sizing:border-box;">
+            <input type="text" id="newStudentPassword" placeholder="Password" style="width: 100%; padding: 8px; margin-bottom: 0.5rem; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: white; box-sizing:border-box;">
+            <button onclick="window.adminModule.addStudent()" style="background:var(--accent); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:600;">Add Student</button>
+          </div>
         </div>
         <div id="studentsList">
             ${this.users.map(u => `
