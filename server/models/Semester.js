@@ -8,7 +8,8 @@ const semesterSchema = new mongoose.Schema({
 
     // Snapshots
     subjects: { type: [String], default: [] },
-    timetable: { type: mongoose.Schema.Types.Mixed, default: {} }
+    timetable: { type: mongoose.Schema.Types.Mixed, default: {} },
+    offDays: { type: [Number], default: [] }
 }, { timestamps: true });
 
 // Only one active semester allowed at a time
