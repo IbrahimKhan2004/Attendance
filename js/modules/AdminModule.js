@@ -83,12 +83,12 @@ export class AdminModule {
       <h2 style="margin-top: 1rem;">Admin Dashboard</h2>
 
       <div style="margin-top: 1rem;">
-        <h3>Configuration</h3>
+        <h3 style="margin-bottom: 1rem;">Configuration</h3>
 
         <div id="semesterControlWrap" style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow:hidden;">
           <div onclick="window.adminModule.toggleSection('sec_semesterControl')" style="display:flex; align-items:center; justify-content:space-between; padding:1rem; cursor:pointer;">
-            <h4 style="margin:0;">Semester Control</h4>
-            <span id="sec_semesterControl_chevron" style="transition:transform 0.2s; display:inline-block; transform:${this.sectionState('sec_semesterControl').rotate};">▾</span>
+            <h4 style="margin:0; line-height:1.4;">Semester Control</h4>
+            <span id="sec_semesterControl_chevron" style="transition:transform 0.2s; display:inline-block; font-size:1.1rem; color:var(--muted); transform:${this.sectionState('sec_semesterControl').rotate};">▾</span>
           </div>
           <div id="sec_semesterControl" style="padding:0 1rem 1rem; display:${this.sectionState('sec_semesterControl').display};">
             <div id="semesterStatusArea" style="margin-top: 0.5rem;">Loading semester status...</div>
@@ -97,8 +97,8 @@ export class AdminModule {
 
         <div style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow:hidden;">
           <div onclick="window.adminModule.toggleSection('sec_collegeInfo')" style="display:flex; align-items:center; justify-content:space-between; padding:1rem; cursor:pointer;">
-            <h4 style="margin:0;">College & Section Info</h4>
-            <span id="sec_collegeInfo_chevron" style="transition:transform 0.2s; display:inline-block; transform:${this.sectionState('sec_collegeInfo').rotate};">▾</span>
+            <h4 style="margin:0; line-height:1.4;">College & Section Info</h4>
+            <span id="sec_collegeInfo_chevron" style="transition:transform 0.2s; display:inline-block; font-size:1.1rem; color:var(--muted); transform:${this.sectionState('sec_collegeInfo').rotate};">▾</span>
           </div>
           <div id="sec_collegeInfo" style="padding:0 1rem 1rem; display:${this.sectionState('sec_collegeInfo').display};">
             <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom: 0.5rem;">
@@ -114,8 +114,8 @@ export class AdminModule {
 
         <div style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow:hidden;">
           <div onclick="window.adminModule.toggleSection('sec_offDays')" style="display:flex; align-items:center; justify-content:space-between; padding:1rem; cursor:pointer;">
-            <h4 style="margin:0;">Off Days (Check to set as OFF)</h4>
-            <span id="sec_offDays_chevron" style="transition:transform 0.2s; display:inline-block; transform:${this.sectionState('sec_offDays').rotate};">▾</span>
+            <h4 style="margin:0; line-height:1.4;">Off Days (Check to set as OFF)</h4>
+            <span id="sec_offDays_chevron" style="transition:transform 0.2s; display:inline-block; font-size:1.1rem; color:var(--muted); transform:${this.sectionState('sec_offDays').rotate};">▾</span>
           </div>
           <div id="sec_offDays" style="padding:0 1rem 1rem; display:${this.sectionState('sec_offDays').display};">
             <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top: 0.5rem;">
@@ -131,8 +131,8 @@ export class AdminModule {
 
         <div style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow:hidden;">
           <div onclick="window.adminModule.toggleSection('sec_holidays')" style="display:flex; align-items:center; justify-content:space-between; padding:1rem; cursor:pointer;">
-            <h4 style="margin:0;">Holidays</h4>
-            <span id="sec_holidays_chevron" style="transition:transform 0.2s; display:inline-block; transform:${this.sectionState('sec_holidays').rotate};">▾</span>
+            <h4 style="margin:0; line-height:1.4;">Holidays</h4>
+            <span id="sec_holidays_chevron" style="transition:transform 0.2s; display:inline-block; font-size:1.1rem; color:var(--muted); transform:${this.sectionState('sec_holidays').rotate};">▾</span>
           </div>
           <div id="sec_holidays" style="padding:0 1rem 1rem; display:${this.sectionState('sec_holidays').display};">
             <div style="display:flex; gap:0.5rem; margin-bottom: 0.5rem;">
@@ -164,8 +164,8 @@ export class AdminModule {
 
         <div style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow:hidden;">
           <div onclick="window.adminModule.toggleSection('sec_subjects')" style="display:flex; align-items:center; justify-content:space-between; padding:1rem; cursor:pointer;">
-            <h4 style="margin:0;">Subjects</h4>
-            <span id="sec_subjects_chevron" style="transition:transform 0.2s; display:inline-block; transform:${this.sectionState('sec_subjects').rotate};">▾</span>
+            <h4 style="margin:0; line-height:1.4;">Subjects</h4>
+            <span id="sec_subjects_chevron" style="transition:transform 0.2s; display:inline-block; font-size:1.1rem; color:var(--muted); transform:${this.sectionState('sec_subjects').rotate};">▾</span>
           </div>
           <div id="sec_subjects" style="padding:0 1rem 1rem; display:${this.sectionState('sec_subjects').display};">
             <div id="subjectsChips" style="display:flex; gap:0.5rem; flex-wrap:wrap; margin: 0.5rem 0;">
@@ -185,8 +185,8 @@ export class AdminModule {
 
         <div style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow:hidden;">
           <div onclick="window.adminModule.toggleSection('sec_periods')" style="display:flex; align-items:center; justify-content:space-between; padding:1rem; cursor:pointer;">
-            <h4 style="margin:0;">Periods (time slots, same every day)</h4>
-            <span id="sec_periods_chevron" style="transition:transform 0.2s; display:inline-block; transform:${this.sectionState('sec_periods').rotate};">▾</span>
+            <h4 style="margin:0; line-height:1.4;">Periods (time slots, same every day)</h4>
+            <span id="sec_periods_chevron" style="transition:transform 0.2s; display:inline-block; font-size:1.1rem; color:var(--muted); transform:${this.sectionState('sec_periods').rotate};">▾</span>
           </div>
           <div id="sec_periods" style="padding:0 1rem 1rem; display:${this.sectionState('sec_periods').display};">
             <div id="periodsList" style="margin-top:0.5rem;">
@@ -206,8 +206,8 @@ export class AdminModule {
 
         <div style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow:hidden;">
           <div onclick="window.adminModule.toggleSection('sec_timetable')" style="display:flex; align-items:center; justify-content:space-between; padding:1rem; cursor:pointer;">
-            <h4 style="margin:0;">Timetable</h4>
-            <span id="sec_timetable_chevron" style="transition:transform 0.2s; display:inline-block; transform:${this.sectionState('sec_timetable').rotate};">▾</span>
+            <h4 style="margin:0; line-height:1.4;">Timetable</h4>
+            <span id="sec_timetable_chevron" style="transition:transform 0.2s; display:inline-block; font-size:1.1rem; color:var(--muted); transform:${this.sectionState('sec_timetable').rotate};">▾</span>
           </div>
           <div id="sec_timetable" style="padding:0 1rem 1rem; display:${this.sectionState('sec_timetable').display};">
             <p style="font-size:0.8rem; color:var(--muted); margin-bottom:0.5rem;">Pick a subject for each period, per day. Add periods above first — or import everything at once below.</p>
@@ -242,8 +242,8 @@ export class AdminModule {
 
         <div style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow:hidden;">
           <div onclick="window.adminModule.toggleSection('sec_syllabus')" style="display:flex; align-items:center; justify-content:space-between; padding:1rem; cursor:pointer;">
-            <h4 style="margin:0;">Syllabus</h4>
-            <span id="sec_syllabus_chevron" style="transition:transform 0.2s; display:inline-block; transform:${this.sectionState('sec_syllabus').rotate};">▾</span>
+            <h4 style="margin:0; line-height:1.4;">Syllabus</h4>
+            <span id="sec_syllabus_chevron" style="transition:transform 0.2s; display:inline-block; font-size:1.1rem; color:var(--muted); transform:${this.sectionState('sec_syllabus').rotate};">▾</span>
           </div>
           <div id="sec_syllabus" style="padding:0 1rem 1rem; display:${this.sectionState('sec_syllabus').display};">
             <p style="font-size:0.8rem; color:var(--muted); margin-bottom:0.5rem;">Units per subject.</p>
@@ -295,11 +295,11 @@ export class AdminModule {
       </div>
 
       <div style="margin-top: 2rem;">
-        <h3>Manage Students</h3>
+        <h3 style="margin-bottom: 1rem;">Manage Students</h3>
         <div style="margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow:hidden;">
           <div onclick="window.adminModule.toggleSection('sec_addStudent')" style="display:flex; align-items:center; justify-content:space-between; padding:1rem; cursor:pointer;">
-            <h4 style="margin:0;">Add Student</h4>
-            <span id="sec_addStudent_chevron" style="transition:transform 0.2s; display:inline-block; transform:${this.sectionState('sec_addStudent').rotate};">▾</span>
+            <h4 style="margin:0; line-height:1.4;">Add Student</h4>
+            <span id="sec_addStudent_chevron" style="transition:transform 0.2s; display:inline-block; font-size:1.1rem; color:var(--muted); transform:${this.sectionState('sec_addStudent').rotate};">▾</span>
           </div>
           <div id="sec_addStudent" style="padding:0 1rem 1rem; display:${this.sectionState('sec_addStudent').display};">
             <input type="text" id="newStudentUsername" placeholder="Username" style="width: 100%; padding: 8px; margin-bottom: 0.5rem; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: white; box-sizing:border-box;">
@@ -318,7 +318,7 @@ export class AdminModule {
       </div>
 
       <div style="margin-top: 2rem; margin-bottom: 3rem;">
-        <h3>Students Attendance Overview</h3>
+        <h3 style="margin-bottom: 1rem;">Students Attendance Overview</h3>
         <div id="adminAttendanceOverview">
           ${this.allAttendance.map(ua => {
             const totalClasses = ua.attendance.reduce((sum, d) => sum + d.records.length, 0);
@@ -1163,6 +1163,8 @@ Now here is my syllabus: [paste or describe your syllabus / attach the PDF or im
             </div>
           `;
         }
+      } else {
+        area.innerHTML = `<div style="color:var(--accent2);">Error loading semester status</div>`;
       }
     } catch (e) {
       area.innerHTML = `<div style="color:var(--accent2);">Error loading semester status</div>`;
