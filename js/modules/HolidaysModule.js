@@ -109,7 +109,7 @@ export class HolidaysModule {
     if (dayData) {
       const statuses = Object.values(dayData);
       const allAbsent = statuses.length > 0 && statuses.every(s => s === 'A');
-      if (dateStr < todayStr && allAbsent) return { type: 'red' };
+      if (allAbsent) return { type: 'red' };
       return { type: 'green' };
     }
 
