@@ -25,7 +25,7 @@ export class HolidaysModule {
       this.viewMonth = today.getMonth();
     }
     const attMod = window.attendanceModule;
-    if (attMod && !attMod.attData) {
+    if (attMod) {
       await attMod.fetchData();
     }
     if (this.semesterRanges === null) {
