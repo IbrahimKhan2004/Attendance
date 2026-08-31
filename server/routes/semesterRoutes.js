@@ -4,7 +4,8 @@ const {
     getActiveSemester,
     getSemesterHistory,
     startSemester,
-    endSemester
+    endSemester,
+    deleteSemester
 } = require('../controllers/semesterController');
 const { protect, adminOnly } = require('../middleware/auth.js');
 
@@ -14,5 +15,6 @@ router.get('/history', protect, getSemesterHistory);
 // Admin routes
 router.post('/start', protect, adminOnly, startSemester);
 router.post('/end', protect, adminOnly, endSemester);
+router.delete('/:id', protect, adminOnly, deleteSemester);
 
 module.exports = router;
