@@ -127,6 +127,7 @@ export class HolidaysModule {
     const daysInMonth = new Date(y, m + 1, 0).getDate();
 
     let cellsHtml = '';
+    let upcomingCollegeDays = 0;
     for (let i = 0; i < firstDay; i++) {
       cellsHtml += `<div class="holcal-cell holcal-empty"></div>`;
     }
@@ -142,6 +143,10 @@ export class HolidaysModule {
       else cls += ' holcal-none';
       if (isToday) cls += ' holcal-today';
 
+      // A 'none' day that's today or in the future is an upcoming class day —
+      // holidays and official offs are already separate status types, so they're naturally excluded.
+      if (status.type === 'none' && ds >= todayStr) upcomingCollegeDays++;
+
       cellsHtml += `<div class="${cls}" onclick="window.holCalDayTap('${ds}')">${d}</div>`;
     }
 
@@ -150,6 +155,10 @@ export class HolidaysModule {
         <span class="holcal-nav" onclick="window.holCalPrevMonth()">&lsaquo;</span>
         <span class="holcal-title">${MONTH_NAMES[m]} ${y}</span>
         <span class="holcal-nav" onclick="window.holCalNextMonth()">&rsaquo;</span>
+      </div>
+      <div class="holcal-summary">
+        <span class="holcal-summary-count">${upcomingCollegeDays}</span>
+        <span class="holcal-summary-label">college day${upcomingCollegeDays === 1 ? '' : 's'} left this month</span>
       </div>
       <div class="holcal-grid holcal-weekdays">
         ${DAY_HEADERS.map(h => `<div class="holcal-weekday">${h}</div>`).join('')}
