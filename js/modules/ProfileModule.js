@@ -16,6 +16,7 @@ export class ProfileModule {
             const userStr = localStorage.getItem('user');
             const user = userStr ? JSON.parse(userStr) : null;
             const username = user ? user.username : 'Student';
+            const isAdmin = user && user.role === 'admin';
 
             // Fetch history and current active semester
             const [historyRes, activeRes] = await Promise.all([
@@ -63,7 +64,8 @@ export class ProfileModule {
                                 <div style="font-weight: 700; font-size: 1.1rem;">${sem.sectionName}</div>
                                 <div style="font-weight: 700; color: var(--accent); font-size: 1.1rem;">${sem.percentage || '--'}</div>
                             </div>
-                            <div style="color: var(--muted); font-size: 0.8rem; margin-bottom: 1rem;">${sem.startDate} — ${endedDate}</div>
+                            <div style="color: var(--muted); font-size: 0.8rem; margin-bottom: ${isAdmin ? '1rem' : '0'};">${sem.startDate} — ${endedDate}</div>
+                            ${isAdmin ? `<button onclick="window.profileModuleInstance.deleteSemester('${sem._id}')" style="width: 100%; padding: 8px; background: var(--surface); border: 1px solid var(--border); color: var(--accent2); border-radius: 8px; font-weight: 600; font-size: 0.85rem;">Delete</button>` : ''}
                         </div>
                     `;
                 });
@@ -79,8 +81,26 @@ export class ProfileModule {
             `;
 
             this.container.innerHTML = html;
+            window.profileModuleInstance = this;
         } catch (e) {
             this.container.innerHTML = `<div style="text-align:center; padding: 2rem; color: var(--accent2);">Error loading profile</div>`;
+        }
+    }
+
+    async deleteSemester(id) {
+        if (!confirm('Are you sure you want to delete this semester? This action cannot be undone.')) {
+            return;
+        }
+        try {
+            const res = await fetchWithAuth(`/semester/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                await this.render();
+            } else {
+                const data = await res.json();
+                alert(data.message || 'Failed to delete semester');
+            }
+        } catch (e) {
+            alert('Error deleting semester');
         }
     }
 }
