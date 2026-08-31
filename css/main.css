@@ -208,22 +208,37 @@ body {
 }
 .holcal-summary {
   display: flex;
-  align-items: baseline;
+  align-items: stretch;
   justify-content: center;
-  gap: 0.4rem;
   background: var(--card);
   border-radius: var(--radius-sm);
-  padding: 0.75rem;
+  padding: 0.75rem 0.5rem;
   margin-bottom: 0.75rem;
+}
+.holcal-summary-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+.holcal-summary-divider {
+  width: 1px;
+  background: var(--border);
+  margin: 0 0.5rem;
 }
 .holcal-summary-count {
   font-weight: 700;
   font-size: 1.4rem;
   color: var(--accent);
 }
+.holcal-summary-count-holiday {
+  color: var(--yellow);
+}
 .holcal-summary-label {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--muted);
+  text-align: center;
 }
 .holcal-grid {
   display: grid;
