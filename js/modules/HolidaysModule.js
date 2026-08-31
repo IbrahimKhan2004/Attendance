@@ -128,6 +128,7 @@ export class HolidaysModule {
 
     let cellsHtml = '';
     let upcomingCollegeDays = 0;
+    let upcomingHolidays = 0;
     for (let i = 0; i < firstDay; i++) {
       cellsHtml += `<div class="holcal-cell holcal-empty"></div>`;
     }
@@ -146,6 +147,7 @@ export class HolidaysModule {
       // A 'none' day that's today or in the future is an upcoming class day —
       // holidays and official offs are already separate status types, so they're naturally excluded.
       if (status.type === 'none' && ds >= todayStr) upcomingCollegeDays++;
+      if (status.type === 'holiday' && ds >= todayStr) upcomingHolidays++;
 
       cellsHtml += `<div class="${cls}" onclick="window.holCalDayTap('${ds}')">${d}</div>`;
     }
@@ -157,8 +159,15 @@ export class HolidaysModule {
         <span class="holcal-nav" onclick="window.holCalNextMonth()">&rsaquo;</span>
       </div>
       <div class="holcal-summary">
-        <span class="holcal-summary-count">${upcomingCollegeDays}</span>
-        <span class="holcal-summary-label">college day${upcomingCollegeDays === 1 ? '' : 's'} left this month</span>
+        <div class="holcal-summary-item">
+          <span class="holcal-summary-count">${upcomingCollegeDays}</span>
+          <span class="holcal-summary-label">college day${upcomingCollegeDays === 1 ? '' : 's'} left</span>
+        </div>
+        <div class="holcal-summary-divider"></div>
+        <div class="holcal-summary-item">
+          <span class="holcal-summary-count holcal-summary-count-holiday">${upcomingHolidays}</span>
+          <span class="holcal-summary-label">holiday${upcomingHolidays === 1 ? '' : 's'} this month</span>
+        </div>
       </div>
       <div class="holcal-grid holcal-weekdays">
         ${DAY_HEADERS.map(h => `<div class="holcal-weekday">${h}</div>`).join('')}
