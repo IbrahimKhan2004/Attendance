@@ -137,10 +137,33 @@ const endSemester = async (req, res) => {
     }
 };
 
+const deleteSemester = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const semester = await Semester.findById(id);
+        if (!semester) {
+            return res.status(404).json({ message: 'Semester not found' });
+        }
+
+        if (semester.status !== 'ended') {
+            return res.status(400).json({ message: 'Only ended semesters can be deleted' });
+        }
+
+        await Semester.deleteOne({ _id: id });
+
+        res.json({ message: 'Semester deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting semester:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
 // Admin only routes above for start/end
 module.exports = {
     getActiveSemester,
     getSemesterHistory,
     startSemester,
-    endSemester
+    endSemester,
+    deleteSemester
 };
