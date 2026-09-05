@@ -139,6 +139,9 @@ export class HolidaysModule {
       const ds = this.dateStr(y, m, d);
       const status = this.getDayStatus(ds, todayStr);
       const isToday = ds === todayStr;
+      // A day only counts as a "college day" if some semester's range actually covers it —
+      // days before a semester started (or after it ended) aren't college days at all.
+      const hasSemester = !!this.getRangeForDate(ds);
       let cls = 'holcal-cell';
       if (status.type === 'holiday') cls += ' holcal-holiday';
       else if (status.type === 'officialoff') cls += ' holcal-officialoff';
@@ -149,14 +152,15 @@ export class HolidaysModule {
 
       // A 'none' day that's today or in the future is an upcoming class day —
       // holidays and official offs are already separate status types, so they're naturally excluded.
-      if (status.type === 'none' && ds >= todayStr) upcomingCollegeDays++;
+      if (status.type === 'none' && ds >= todayStr && hasSemester) upcomingCollegeDays++;
       // "holiday this month" counts every holiday in the displayed month, not just upcoming ones.
       if (status.type === 'holiday') upcomingHolidays++;
 
-      // Past-month stats: present/missed/total college days (non-holiday, non-officialoff days).
+      // Past-month stats: present/missed/total college days (non-holiday, non-officialoff days
+      // within an actual semester range).
       if (status.type === 'green') presentDays++;
       else if (status.type === 'red') missedDays++;
-      if (status.type === 'green' || status.type === 'red' || status.type === 'none') totalCollegeDays++;
+      if (status.type === 'green' || status.type === 'red' || (status.type === 'none' && hasSemester)) totalCollegeDays++;
 
       cellsHtml += `<div class="${cls}" onclick="window.holCalDayTap('${ds}')">${d}</div>`;
     }
