@@ -127,7 +127,6 @@ export class HolidaysModule {
     const daysInMonth = new Date(y, m + 1, 0).getDate();
 
     let cellsHtml = '';
-    let upcomingCollegeDays = 0;
     let upcomingHolidays = 0;
     let presentDays = 0;
     let missedDays = 0;
@@ -150,14 +149,11 @@ export class HolidaysModule {
       else cls += ' holcal-none';
       if (isToday) cls += ' holcal-today';
 
-      // A 'none' day that's today or in the future is an upcoming class day —
-      // holidays and official offs are already separate status types, so they're naturally excluded.
-      if (status.type === 'none' && ds >= todayStr && hasSemester) upcomingCollegeDays++;
-      // "holiday this month" counts every holiday in the displayed month, not just upcoming ones.
+      // Holiday count covers every holiday in the displayed month.
       if (status.type === 'holiday') upcomingHolidays++;
 
-      // Past-month stats: present/missed/total college days (non-holiday, non-officialoff days
-      // within an actual semester range).
+      // present/missed/total college days (non-holiday, non-officialoff days within an
+      // actual semester range).
       if (status.type === 'green') presentDays++;
       else if (status.type === 'red') missedDays++;
       if (status.type === 'green' || status.type === 'red' || (status.type === 'none' && hasSemester)) totalCollegeDays++;
@@ -165,12 +161,7 @@ export class HolidaysModule {
       cellsHtml += `<div class="${cls}" onclick="window.holCalDayTap('${ds}')">${d}</div>`;
     }
 
-    const today = new Date();
-    // Current month gets the same 4-stat view as past months; only a fully future month
-    // (viewed via the > arrow ahead of today) keeps the "college days left" view.
-    const isPastMonth = (y < today.getFullYear()) || (y === today.getFullYear() && m <= today.getMonth());
-
-    const summaryHtml = isPastMonth ? `
+    const summaryHtml = `
       <div class="holcal-summary holcal-summary-4col">
         <div class="holcal-summary-item">
           <span class="holcal-summary-count holcal-summary-count-present">${presentDays}</span>
@@ -190,18 +181,6 @@ export class HolidaysModule {
         <div class="holcal-summary-item">
           <span class="holcal-summary-count holcal-summary-count-holiday">${upcomingHolidays}</span>
           <span class="holcal-summary-label">holiday${upcomingHolidays === 1 ? '' : 's'}</span>
-        </div>
-      </div>
-    ` : `
-      <div class="holcal-summary">
-        <div class="holcal-summary-item">
-          <span class="holcal-summary-count">${upcomingCollegeDays}</span>
-          <span class="holcal-summary-label">college day${upcomingCollegeDays === 1 ? '' : 's'} left</span>
-        </div>
-        <div class="holcal-summary-divider"></div>
-        <div class="holcal-summary-item">
-          <span class="holcal-summary-count holcal-summary-count-holiday">${upcomingHolidays}</span>
-          <span class="holcal-summary-label">holiday${upcomingHolidays === 1 ? '' : 's'} this month</span>
         </div>
       </div>
     `;
