@@ -36,32 +36,40 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/semester', semesterRoutes);
 
 // Connect to MongoDB (with retry/backoff so transient Atlas/network timeouts don't kill the server)
-async function connectWithRetry(retries = 10, delayMs = 5000) {
-    for (let attempt = 1; attempt <= retries; attempt++) {
-        try {
-            await mongoose.connect(process.env.MONGODB_URI);
-            console.log('Connected to MongoDB');
+let isConnecting = false;
 
-            // Seed Admin User
-            const User = require('./models/User');
-            const adminUser = await User.findOne({ username: process.env.ADMIN_USERNAME });
-            if (!adminUser && process.env.ADMIN_USERNAME && process.env.ADMIN_PASSWORD) {
-                await User.create({
-                    username: process.env.ADMIN_USERNAME,
-                    password: process.env.ADMIN_PASSWORD,
-                    role: 'admin'
-                });
-                console.log('Admin user seeded');
-            }
-            return;
-        } catch (err) {
-            console.error(`MongoDB connection attempt ${attempt}/${retries} failed:`, err.message);
-            if (attempt === retries) {
-                console.error('All MongoDB connection attempts failed. Server will keep running but DB features will be unavailable until it reconnects.');
+async function connectWithRetry(retries = 10, delayMs = 5000) {
+    if (isConnecting) return; // avoid overlapping retry loops racing each other
+    isConnecting = true;
+    try {
+        for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+                await mongoose.connect(process.env.MONGODB_URI);
+                console.log('Connected to MongoDB');
+
+                // Seed Admin User
+                const User = require('./models/User');
+                const adminUser = await User.findOne({ username: process.env.ADMIN_USERNAME });
+                if (!adminUser && process.env.ADMIN_USERNAME && process.env.ADMIN_PASSWORD) {
+                    await User.create({
+                        username: process.env.ADMIN_USERNAME,
+                        password: process.env.ADMIN_PASSWORD,
+                        role: 'admin'
+                    });
+                    console.log('Admin user seeded');
+                }
                 return;
+            } catch (err) {
+                console.error(`MongoDB connection attempt ${attempt}/${retries} failed:`, err.message);
+                if (attempt === retries) {
+                    console.error('All MongoDB connection attempts failed. Server will keep running but DB features will be unavailable until it reconnects.');
+                    return;
+                }
+                await new Promise(resolve => setTimeout(resolve, delayMs));
             }
-            await new Promise(resolve => setTimeout(resolve, delayMs));
         }
+    } finally {
+        isConnecting = false;
     }
 }
 
