@@ -235,6 +235,21 @@ body {
 .holcal-summary-count-holiday {
   color: var(--yellow);
 }
+.holcal-summary-count-present {
+  color: var(--green);
+}
+.holcal-summary-count-missed {
+  color: var(--red);
+}
+.holcal-summary-4col .holcal-summary-count {
+  font-size: 1.1rem;
+}
+.holcal-summary-4col .holcal-summary-label {
+  font-size: 0.65rem;
+}
+.holcal-summary-4col .holcal-summary-divider {
+  margin: 0 0.25rem;
+}
 .holcal-summary-label {
   font-size: 0.75rem;
   color: var(--muted);
