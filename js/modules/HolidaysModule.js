@@ -166,7 +166,9 @@ export class HolidaysModule {
     }
 
     const today = new Date();
-    const isPastMonth = (y < today.getFullYear()) || (y === today.getFullYear() && m < today.getMonth());
+    // Current month gets the same 4-stat view as past months; only a fully future month
+    // (viewed via the > arrow ahead of today) keeps the "college days left" view.
+    const isPastMonth = (y < today.getFullYear()) || (y === today.getFullYear() && m <= today.getMonth());
 
     const summaryHtml = isPastMonth ? `
       <div class="holcal-summary holcal-summary-4col">
