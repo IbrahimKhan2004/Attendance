@@ -129,6 +129,9 @@ export class HolidaysModule {
     let cellsHtml = '';
     let upcomingCollegeDays = 0;
     let upcomingHolidays = 0;
+    let presentDays = 0;
+    let missedDays = 0;
+    let totalCollegeDays = 0;
     for (let i = 0; i < firstDay; i++) {
       cellsHtml += `<div class="holcal-cell holcal-empty"></div>`;
     }
@@ -147,17 +150,43 @@ export class HolidaysModule {
       // A 'none' day that's today or in the future is an upcoming class day —
       // holidays and official offs are already separate status types, so they're naturally excluded.
       if (status.type === 'none' && ds >= todayStr) upcomingCollegeDays++;
-      if (status.type === 'holiday' && ds >= todayStr) upcomingHolidays++;
+      // "holiday this month" counts every holiday in the displayed month, not just upcoming ones.
+      if (status.type === 'holiday') upcomingHolidays++;
+
+      // Past-month stats: present/missed/total college days (non-holiday, non-officialoff days).
+      if (status.type === 'green') presentDays++;
+      else if (status.type === 'red') missedDays++;
+      if (status.type === 'green' || status.type === 'red' || status.type === 'none') totalCollegeDays++;
 
       cellsHtml += `<div class="${cls}" onclick="window.holCalDayTap('${ds}')">${d}</div>`;
     }
 
-    list.innerHTML = `
-      <div class="holcal-header">
-        <span class="holcal-nav" onclick="window.holCalPrevMonth()">&lsaquo;</span>
-        <span class="holcal-title">${MONTH_NAMES[m]} ${y}</span>
-        <span class="holcal-nav" onclick="window.holCalNextMonth()">&rsaquo;</span>
+    const today = new Date();
+    const isPastMonth = (y < today.getFullYear()) || (y === today.getFullYear() && m < today.getMonth());
+
+    const summaryHtml = isPastMonth ? `
+      <div class="holcal-summary holcal-summary-4col">
+        <div class="holcal-summary-item">
+          <span class="holcal-summary-count holcal-summary-count-present">${presentDays}</span>
+          <span class="holcal-summary-label">present</span>
+        </div>
+        <div class="holcal-summary-divider"></div>
+        <div class="holcal-summary-item">
+          <span class="holcal-summary-count holcal-summary-count-missed">${missedDays}</span>
+          <span class="holcal-summary-label">missed</span>
+        </div>
+        <div class="holcal-summary-divider"></div>
+        <div class="holcal-summary-item">
+          <span class="holcal-summary-count">${totalCollegeDays}</span>
+          <span class="holcal-summary-label">total college day${totalCollegeDays === 1 ? '' : 's'}</span>
+        </div>
+        <div class="holcal-summary-divider"></div>
+        <div class="holcal-summary-item">
+          <span class="holcal-summary-count holcal-summary-count-holiday">${upcomingHolidays}</span>
+          <span class="holcal-summary-label">holiday${upcomingHolidays === 1 ? '' : 's'}</span>
+        </div>
       </div>
+    ` : `
       <div class="holcal-summary">
         <div class="holcal-summary-item">
           <span class="holcal-summary-count">${upcomingCollegeDays}</span>
@@ -169,6 +198,15 @@ export class HolidaysModule {
           <span class="holcal-summary-label">holiday${upcomingHolidays === 1 ? '' : 's'} this month</span>
         </div>
       </div>
+    `;
+
+    list.innerHTML = `
+      <div class="holcal-header">
+        <span class="holcal-nav" onclick="window.holCalPrevMonth()">&lsaquo;</span>
+        <span class="holcal-title">${MONTH_NAMES[m]} ${y}</span>
+        <span class="holcal-nav" onclick="window.holCalNextMonth()">&rsaquo;</span>
+      </div>
+      ${summaryHtml}
       <div class="holcal-grid holcal-weekdays">
         ${DAY_HEADERS.map(h => `<div class="holcal-weekday">${h}</div>`).join('')}
       </div>
