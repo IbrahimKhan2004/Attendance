@@ -42,6 +42,7 @@ export class AttendanceModule {
     window.toggleModalBtn = (key) => this.toggleModalBtn(key);
     window.togglePeriod = (dateKey, pKey) => this.togglePeriod(dateKey, pKey);
     window.fillModalPeriods = (dateStr, overrideDay) => this.fillModalPeriods(dateStr, overrideDay);
+    window.onLibrarySlotChange = (key) => this.onLibrarySlotChange(key);
 
     // Modal date change listener.
     // Module scripts are deferred, so DOMContentLoaded has usually already
@@ -434,9 +435,60 @@ export class AttendanceModule {
         </button>
       </div>`;
     }).filter(x => x !== '').join('');
+
+    // --- LIBRARY proxy handling (additive, non-regressive) ---
+    // LIBRARY periods are still fully excluded from the loop above, exactly
+    // as before, so existing S-index assignments for all other periods are
+    // never affected. They are appended here as their own block so a
+    // library slot can optionally be marked with a proxy subject without
+    // disturbing anything else.
+    PERIODS.forEach((p, i) => {
+      const sub = tt[i].sub;
+      if (sub !== 'LIBRARY') return;
+      const key = `${p.slot}`;
+      const recordKey = `S${subjIdx}`;
+      subjIdx++;
+
+      let currentSub = 'LIBRARY';
+      let val = 'P';
+      for (const k in existingData) {
+        if (k.endsWith('_' + recordKey)) {
+          currentSub = k.split('_')[0];
+          val = existingData[k];
+          break;
+        }
+      }
+      const isProxy = currentSub !== 'LIBRARY';
+
+      const subOptions = SUBJECTS.map(s => `<option value="${s}" ${s === currentSub ? 'selected' : ''}>${s}</option>`).join('');
+
+      html += `<div class="ios-list-item" style="display:flex; align-items:center; gap:0.5rem; background:var(--card);">
+        <div style="flex:1">
+          <div style="font-size:0.7rem; color:var(--muted); margin-bottom:4px;">${p.slot} (${formatTime12(p.start)}) — free period, select proxy subject if held</div>
+          <select id="msub_${key}" onchange="window.onLibrarySlotChange('${key}')" style="width:100%; padding:6px; border-radius:6px; background:var(--surface); color:white; border:1px solid var(--border);">
+            ${subOptions}
+          </select>
+        </div>
+        <button type="button" id="mbtn_${key}" onclick="window.toggleModalBtn('${key}')"
+          style="min-width:80px; padding:8px; border-radius:8px; font-weight:600; border:none; color:white; background:${val === 'P' ? 'var(--green)' : 'var(--red)'}; ${isProxy ? '' : 'display:none;'}">
+          ${val === 'P' ? 'Present' : 'Absent'}
+        </button>
+      </div>`;
+    });
+
     html += '</div>';
 
     document.getElementById('modalPeriods').innerHTML = html;
+  }
+
+  onLibrarySlotChange(key) {
+    // Shows/hides the Present-Absent button for a LIBRARY slot depending on
+    // whether a proxy subject is currently selected. Purely a UI toggle;
+    // does not touch any other period's markup or data.
+    const sel = document.getElementById('msub_' + key);
+    const btn = document.getElementById('mbtn_' + key);
+    if (!sel || !btn) return;
+    btn.style.display = sel.value === 'LIBRARY' ? 'none' : '';
   }
 
   toggleModalBtn(key) {
@@ -482,6 +534,27 @@ export class AttendanceModule {
       const btn = document.getElementById('mbtn_' + key);
 
       if (subSelect && btn) {
+        records.push({
+            subject: subSelect.value,
+            status: btn.textContent.includes('Present') ? 'present' : 'absent'
+        });
+      }
+    });
+
+    // --- LIBRARY proxy handling (additive, non-regressive) ---
+    // The loop above still skips LUNCH/LIBRARY exactly as before, so its
+    // output is byte-identical to the previous behavior. This block only
+    // appends a record for a LIBRARY slot when the user actually selected
+    // a proxy subject there; if it was left as "LIBRARY", nothing is added
+    // and the saved records array is exactly what it was before this change.
+    PERIODS.forEach((p, i) => {
+      const sub = tt[i].sub;
+      if (sub !== 'LIBRARY') return;
+      const key = `${p.slot}`;
+      const subSelect = document.getElementById('msub_' + key);
+      const btn = document.getElementById('mbtn_' + key);
+
+      if (subSelect && btn && subSelect.value !== 'LIBRARY') {
         records.push({
             subject: subSelect.value,
             status: btn.textContent.includes('Present') ? 'present' : 'absent'
