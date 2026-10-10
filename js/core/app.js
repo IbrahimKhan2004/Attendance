@@ -45,6 +45,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (overlay) overlay.style.display = 'none';
   };
 
+  window.exportMyData = async () => {
+    const [att, sem] = await Promise.all([fetchWithAuth('/attendance'), fetchWithAuth('/semester/active')]);
+    const data = { user: { username: user.username, role: user.role }, semester: await sem.json(), attendance: await att.json() };
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+    link.download = `attendance-${user.username}.json`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
   // Register pages
   pageManager.registerPage('timetable', new TimetableModule());
   pageManager.registerPage('holidays', new HolidaysModule());
