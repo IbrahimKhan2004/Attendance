@@ -1,4 +1,5 @@
 const GlobalConfig = require('../models/GlobalConfig');
+const Attendance = require('../models/Attendance');
 
 const getConfig = async (req, res) => {
     try {
@@ -31,6 +32,7 @@ const updateConfig = async (req, res) => {
         }
 
         const updatedConfig = await config.save();
+        await Attendance.deleteMany({ date: { $in: updatedConfig.holidays.map(h => h.date) } });
         res.json(updatedConfig);
     } catch (error) {
         console.error(error);
