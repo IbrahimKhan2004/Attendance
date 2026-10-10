@@ -311,7 +311,7 @@ export class AdminModule {
             ${this.users.map(u => `
                 <div style="display:flex; justify-content:space-between; padding: 0.5rem; border-bottom: 1px solid var(--border);">
                     <span>${u.username}</span>
-                    <button onclick="window.adminModule.deleteStudent('${u._id}')" style="background:var(--accent2); color:white; border:none; padding:4px 8px; border-radius:4px;">Delete</button>
+                    <span><button onclick="window.adminModule.editStudent('${u._id}')" style="background:var(--accent); color:white; border:none; padding:4px 8px; border-radius:4px;">Edit</button> <button onclick="window.adminModule.deleteStudent('${u._id}')" style="background:var(--accent2); color:white; border:none; padding:4px 8px; border-radius:4px;">Delete</button></span>
                 </div>
             `).join('')}
         </div>
@@ -1212,6 +1212,30 @@ Now here is my syllabus: [paste or describe your syllabus / attach the PDF or im
     } catch (e) {
       alert('Error ending semester');
     }
+  }
+
+  async editStudent(id) {
+      const user = this.users.find(u => u._id === id);
+      const username = prompt('New username:', user.username);
+      if (username === null) return;
+      const password = prompt('New password (leave blank to keep current):');
+      if (password === null) return;
+
+      try {
+          const res = await fetchWithAuth(`/auth/users/${id}`, {
+              method: 'PUT',
+              body: JSON.stringify({ username, password })
+          });
+          if (res.ok) {
+              alert('Student updated.');
+              await this.onShow();
+          } else {
+              const err = await res.json();
+              alert(err.message || 'Failed to update student.');
+          }
+      } catch (e) {
+          alert('Error updating student.');
+      }
   }
 
   async deleteStudent(id) {
