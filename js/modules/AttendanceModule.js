@@ -63,7 +63,7 @@ export class AttendanceModule {
         SUBJECTS.forEach(s => { subTotals[s] = 0; subPresent[s] = 0; });
     }
 
-    for (const dateKey in data) {
+    for (const dateKey in data) { if ((window.globalConfig.holidays || []).some(h => h.date === dateKey)) continue;
       const day = data[dateKey];
       let dTotal = 0, dPresent = 0;
       for (const pKey in day) {
