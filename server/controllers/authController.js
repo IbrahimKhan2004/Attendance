@@ -69,6 +69,28 @@ const getUsers = async (req, res) => {
     }
 };
 
+const updateUser = async (req, res) => {
+    const { username, password } = req.body;
+
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        if (username && username !== user.username) {
+            if (await User.findOne({ username })) {
+                return res.status(400).json({ message: 'User already exists' });
+            }
+            user.username = username;
+        }
+        if (password) user.password = password;
+        await user.save();
+        res.json({ _id: user._id, username: user.username, role: user.role });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
 const deleteUser = async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
@@ -82,4 +104,4 @@ const deleteUser = async (req, res) => {
     }
 };
 
-module.exports = { login, createUser, getUsers, deleteUser };
+module.exports = { login, createUser, getUsers, updateUser, deleteUser };
