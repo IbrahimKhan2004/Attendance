@@ -43,6 +43,7 @@
     <button id="profileMenuBtn" onclick="toggleProfileMenu()" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 0 0.5rem;">⋮</button>
     <div id="profileDropdown" style="display: none; position: absolute; right: 0; top: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem; z-index: 100; min-width: 120px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
       <button onclick="window.goToProfile(); toggleProfileMenu();" style="width: 100%; text-align: left; background: none; border: none; color: white; padding: 0.5rem; border-radius: 4px; font-size: 0.9rem;">Profile</button>
+      <button onclick="window.exportMyData(); toggleProfileMenu();" style="width: 100%; text-align: left; background: none; border: none; color: white; padding: 0.5rem; border-radius: 4px; font-size: 0.9rem; margin-top: 4px;">Export Data</button>
       <button onclick="window.handleLogout(); toggleProfileMenu();" style="width: 100%; text-align: left; background: none; border: none; color: var(--accent2); padding: 0.5rem; border-radius: 4px; font-size: 0.9rem; margin-top: 4px;">Logout</button>
     </div>
   </div>
