@@ -311,7 +311,7 @@ export class AdminModule {
             ${this.users.map(u => `
                 <div style="display:flex; justify-content:space-between; padding: 0.5rem; border-bottom: 1px solid var(--border);">
                     <span>${u.username}</span>
-                    <span><button onclick="window.adminModule.editStudent('${u._id}')" style="background:var(--accent); color:white; border:none; padding:4px 8px; border-radius:4px;">Edit</button> <button onclick="window.adminModule.deleteStudent('${u._id}')" style="background:var(--accent2); color:white; border:none; padding:4px 8px; border-radius:4px;">Delete</button></span>
+                    <span><button onclick="window.adminModule.editStudent('${u._id}', 'username')" style="background:var(--accent); color:white; border:none; padding:4px 8px; border-radius:4px;">Username</button> <button onclick="window.adminModule.editStudent('${u._id}', 'password')" style="background:var(--accent); color:white; border:none; padding:4px 8px; border-radius:4px;">Password</button> <button onclick="window.adminModule.deleteStudent('${u._id}')" style="background:var(--accent2); color:white; border:none; padding:4px 8px; border-radius:4px;">Delete</button></span>
                 </div>
             `).join('')}
         </div>
@@ -1214,17 +1214,30 @@ Now here is my syllabus: [paste or describe your syllabus / attach the PDF or im
     }
   }
 
-  async editStudent(id) {
+  async editStudent(id, field) {
       const user = this.users.find(u => u._id === id);
-      const username = prompt('New username:', user.username);
-      if (username === null) return;
-      const password = prompt('New password (leave blank to keep current):');
-      if (password === null) return;
+      const ov = document.createElement('div');
+      ov.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(5px); z-index:100; display:flex; align-items:center; justify-content:center; padding:1rem;';
+      ov.innerHTML = `<div class="ios-card" style="width:100%; max-width:340px; padding:1.5rem; border-radius:28px; text-align:center;">
+          <h2 style="font-size:1.2rem; font-weight:700; margin-bottom:0.25rem;">Change ${field}</h2>
+          <p style="font-size:0.8rem; color:var(--muted); margin-bottom:1rem;">${user.username}</p>
+          <input type="text" placeholder="New ${field}" style="width:100%; padding:12px; background:var(--surface); border:1px solid var(--border); border-radius:14px; color:white; margin-bottom:1.25rem; box-sizing:border-box;">
+          <div style="display:flex; gap:0.75rem;">
+            <button class="cancel" style="flex:1; padding:12px; background:var(--surface); border:1px solid var(--border); color:white; border-radius:999px; font-weight:600;">Cancel</button>
+            <button class="save" style="flex:1; padding:12px; background:var(--accent); border:none; color:white; border-radius:999px; font-weight:600;">Save</button>
+          </div></div>`;
+      document.body.appendChild(ov);
+      const input = ov.querySelector('input');
+      if (field === 'username') input.value = user.username;
+      input.focus();
+      const value = await new Promise(r => { ov.querySelector('.save').onclick = () => r(input.value); ov.querySelector('.cancel').onclick = () => r(null); });
+      ov.remove();
+      if (!value) return;
 
       try {
           const res = await fetchWithAuth(`/auth/users/${id}`, {
               method: 'PUT',
-              body: JSON.stringify({ username, password })
+              body: JSON.stringify({ [field]: value })
           });
           if (res.ok) {
               alert('Student updated.');
