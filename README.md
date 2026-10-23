@@ -9,6 +9,7 @@ A self-hosted attendance tracker for college students. Mark attendance period-by
 - **7-day trend** and a **streak counter** for consecutive fully-attended days
 - **Holiday calendar** with upcoming/past indicators; saving a holiday permanently deletes any attendance already marked on that date
 - **Syllabus browser** — units/topics per subject, or lab exercises for practical subjects
+- **Attendance cache** — attendance is cached in the browser (localStorage) and refetched only when a lightweight `/api/attendance/version` check shows the data changed in the database (own edits, admin holiday/semester changes)
 - **Export Data** — ⋮ menu → Export Data downloads your username, active semester details, and attendance records as a single JSON file
 - **Admin panel** — manage students (add, rename, reset password, delete), timetable, holidays, and syllabus, including bulk **JSON import** (with a ready-to-use AI prompt to generate the JSON from a timetable image, holiday circular, or syllabus PDF)
 - **JWT-based auth** with a seeded admin account
