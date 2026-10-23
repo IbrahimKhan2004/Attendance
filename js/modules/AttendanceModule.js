@@ -15,9 +15,15 @@ export class AttendanceModule {
 
   async fetchData() {
     try {
-      const res = await fetchWithAuth('/attendance');
-      if (res.ok) {
-        const list = await res.json();
+      const key = 'attCache_' + JSON.parse(localStorage.getItem('user'))._id;
+      const cached = JSON.parse(localStorage.getItem(key) || 'null');
+      const vRes = await fetchWithAuth('/attendance/version');
+      const ver = vRes.ok ? (await vRes.json()).v : null;
+      const hit = cached && ver && cached.v === ver;
+      const res = hit ? null : await fetchWithAuth('/attendance');
+      if (hit || res.ok) {
+        const list = hit ? cached.list : await res.json();
+        if (!hit && ver) localStorage.setItem(key, JSON.stringify({ v: ver, list }));
         // Convert array to internal map format { "YYYY-MM-DD": { "SUB_SLOT": "P"|"A" } }
         this.attData = {};
         list.forEach(item => {
