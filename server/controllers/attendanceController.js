@@ -50,6 +50,17 @@ const getMyAttendance = async (req, res) => {
     }
 };
 
+const getAttendanceVersion = async (req, res) => {
+    try {
+        const activeSemester = await Semester.findOne({ status: 'active' });
+        const filter = { userId: req.user._id, semesterId: activeSemester && activeSemester._id };
+        const [count, last] = await Promise.all([Attendance.countDocuments(filter), Attendance.findOne(filter).sort({ updatedAt: -1 }).select('updatedAt')]);
+        res.json({ v: `${filter.semesterId}|${count}|${last ? last.updatedAt.getTime() : 0}` });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
 const deleteAttendance = async (req, res) => {
     try {
         const { date } = req.params;
@@ -88,4 +99,4 @@ const getAllUsersAttendance = async (req, res) => {
     }
 };
 
-module.exports = { markAttendance, getMyAttendance, deleteAttendance, getAllUsersAttendance };
+module.exports = { markAttendance, getMyAttendance, getAttendanceVersion, deleteAttendance, getAllUsersAttendance };
